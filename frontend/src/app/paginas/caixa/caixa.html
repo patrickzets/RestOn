@@ -1,0 +1,339 @@
+<div class="titulo">
+  <div>
+    <h1>Caixa</h1>
+  </div>
+</div>
+
+<!-- Barra do caixa: situação, os dois números que importam e o botão de fechar -->
+<section class="barra" aria-label="Turno do caixa">
+  @if (!turnoCarregado()) {
+    <p class="aviso-vazio">Carregando...</p>
+  } @else if (turno(); as t) {
+    <div class="barra-linha">
+      <div class="situacao">
+        <span class="ponto" aria-hidden="true"></span>
+        <div>
+          <b>Caixa aberto</b>
+          <small>{{ t.operadorNome }} desde {{ t.abertoEm | date: 'HH:mm' }}</small>
+        </div>
+      </div>
+      <div class="barra-numero principal"><span>Recebido no turno</span><b class="num">{{ reais(t.totalRecebido) }}</b></div>
+      <div class="barra-numero"><span>Dinheiro esperado</span><b class="num">{{ reais(t.dinheiroEsperado) }}</b></div>
+      @if (!fechandoCaixa()) {
+        <button type="button" class="btn fechar-turno" (click)="fechandoCaixa.set(true)">
+          <svg class="i"><use href="icones.svg#i-cart" /></svg>
+          Fechar caixa
+        </button>
+      }
+    </div>
+
+    @if (fechandoCaixa()) {
+      <div class="fechamento" role="group" aria-label="Fechar o caixa">
+        <p class="detalhe-turno">
+          Inicial {{ reais(t.valorInicial) }} · PIX {{ reais(t.totalPix) }} · Cartão {{ reais(t.totalCartao) }} · Dinheiro {{ reais(t.totalDinheiro) }}
+          · {{ t.qtdPagamentos }} {{ t.qtdPagamentos === 1 ? 'pagamento' : 'pagamentos' }}
+        </p>
+        <div class="campo">
+          <label for="contado">Dinheiro contado na gaveta (R$)</label>
+          <input id="contado" class="entrada" type="number" inputmode="decimal" step="0.01" min="0" [value]="valorContado() ?? ''" (input)="valorContado.set(numero($event))" (keydown.enter)="fecharCaixa()" />
+          <span class="dica-campo">Conte o dinheiro físico. O sistema compara com o esperado ({{ reais(t.dinheiroEsperado) }}).</span>
+        </div>
+        <div class="linha-botoes">
+          <button type="button" class="btn" (click)="fechandoCaixa.set(false)">Voltar</button>
+          <button type="button" class="btn pri" (click)="fecharCaixa()">Fechar o caixa</button>
+        </div>
+      </div>
+    }
+  } @else {
+    <div class="barra-linha">
+      <div class="situacao">
+        <span class="ponto fechado" aria-hidden="true"></span>
+        <div>
+          <b>Caixa fechado</b>
+          <small>Abra o caixa para receber pagamentos.</small>
+        </div>
+      </div>
+    </div>
+    <div class="abertura" role="group" aria-label="Abrir o caixa">
+      <div class="campo">
+        <label for="inicial">Dinheiro na gaveta ao abrir (R$)</label>
+        <input id="inicial" class="entrada" type="number" inputmode="decimal" step="0.01" min="0" [value]="valorInicial() ?? ''" (input)="valorInicial.set(numero($event))" (keydown.enter)="abrirCaixa()" />
+      </div>
+      <button type="button" class="btn pri" (click)="abrirCaixa()">Abrir caixa</button>
+    </div>
+  }
+
+  @if (erroDoTurno()) {
+    <div class="alerta perigo sem-margem" role="alert">{{ erroDoTurno() }}</div>
+  }
+
+  @if (resumoDoFechamento(); as r) {
+    <div class="resumo-fechamento" role="status">
+      <b>Caixa fechado.</b>
+      Esperado em dinheiro {{ reais(r.dinheiroEsperado) }}, contado {{ reais(r.valorContado ?? 0) }}:
+      @if ((r.diferenca ?? 0) === 0) {
+        <span class="selo ok">Bateu certinho</span>
+      } @else if ((r.diferenca ?? 0) < 0) {
+        <span class="selo perigo">Faltou {{ reais(-(r.diferenca ?? 0)) }}</span>
+      } @else {
+        <span class="selo aviso">Sobrou {{ reais(r.diferenca ?? 0) }}</span>
+      }
+      Total recebido no turno: {{ reais(r.totalRecebido) }}.
+      <button type="button" class="link" (click)="resumoDoFechamento.set(null)">Dispensar</button>
+    </div>
+  }
+</section>
+
+@if (erroDaLista()) {
+  <div class="alerta perigo" role="alert">{{ erroDaLista() }}</div>
+}
+
+<div class="ferramentas">
+  <div class="filtros" role="group" aria-label="Filtrar por situação">
+    <button type="button" class="filtro" [class.ativo]="filtro() === 'ABERTA'" [attr.aria-pressed]="filtro() === 'ABERTA'" (click)="escolherFiltro('ABERTA')">A receber</button>
+    <button type="button" class="filtro" [class.ativo]="filtro() === 'FECHADA'" [attr.aria-pressed]="filtro() === 'FECHADA'" (click)="escolherFiltro('FECHADA')">Fechadas</button>
+  </div>
+  <input class="entrada busca" type="search" placeholder="Buscar mesa ou código" aria-label="Buscar por mesa ou código"
+    [value]="busca()" (input)="busca.set($any($event.target).value)" />
+</div>
+
+<!-- Um cartão por comanda; o que falta pagar fica em destaque -->
+<div class="cartoes">
+  @for (c of visiveis(); track c.id) {
+    <button type="button" class="cartao" [class.com-pendencia]="pendenciasDe(c.id) > 0" (click)="abrirDetalhe(c.id)">
+      @if (pendenciasDe(c.id) > 0) {
+        <span class="cartao-aviso">{{ pendenciasDe(c.id) === 1 ? '1 pedido ainda' : pendenciasDe(c.id) + ' pedidos ainda' }} na cozinha/bar</span>
+      }
+      <span class="cartao-topo">
+        <b>Mesa {{ c.mesaNumero }}</b>
+        <span class="cartao-comanda">Comanda {{ c.numeroCliente }} · {{ c.codigo }}</span>
+      </span>
+      @if (c.status === 'FECHADA') {
+        <span class="selo ok">Fechada</span>
+      } @else if (c.total === 0) {
+        <span class="selo">Sem itens</span>
+      } @else if (c.restante > 0) {
+        <span class="falta-rotulo">Falta pagar</span>
+        <span class="falta-valor">{{ reais(c.restante) }}</span>
+      } @else {
+        <span class="selo ok">Paga, pronta para fechar</span>
+      }
+    </button>
+  } @empty {
+    @if (!carregando()) {
+      <p class="aviso-vazio vazio">Nenhuma comanda {{ filtro() === 'ABERTA' ? 'para receber agora' : 'fechada' }}.</p>
+    }
+  }
+</div>
+@if (carregando()) {
+  <p class="aviso-vazio">Carregando...</p>
+}
+
+@if (aberta(); as c) {
+  <div class="fundo" (click)="fechar()">
+    <div class="janela" role="dialog" aria-modal="true" aria-labelledby="titulo-janela" tabindex="-1"
+      (click)="$event.stopPropagation()" (keydown.escape)="fechar()" (keydown.tab)="prenderFoco($event)">
+
+      <div class="janela-cab">
+        <div>
+          <h2 id="titulo-janela">Mesa {{ c.mesaNumero }} · Comanda {{ c.numeroCliente }}</h2>
+          <p>{{ c.codigo }}</p>
+        </div>
+        <button class="fechar" type="button" aria-label="Fechar" (click)="fechar()">
+          <svg class="i"><use href="icones.svg#i-x" /></svg>
+        </button>
+      </div>
+
+      <!-- Indicador de passos: o atual é calculado do estado da comanda -->
+      <ol class="passos" aria-label="Passos da cobrança">
+        <li class="feito"><span>1</span> Conta</li>
+        <li [class.atual]="passo() === 'pagamento' && c.status === 'ABERTA'" [class.feito]="passo() === 'fechar' || c.status !== 'ABERTA'"><span>2</span> Pagamento</li>
+        <li [class.atual]="passo() === 'fechar' && c.status === 'ABERTA'" [class.feito]="c.status === 'FECHADA'"><span>3</span> Fechar</li>
+      </ol>
+
+      <section class="secao" aria-label="Conta">
+        @for (p of c.pedidos; track p.id) {
+          @for (i of p.itens; track i.id) {
+            @if (!i.cancelado && i.comandaId === c.id) {
+              <div class="item">
+                <span>{{ i.quantidade }}× {{ i.produtoNome }}</span>
+                <span class="num">{{ reais(i.subtotal) }}</span>
+              </div>
+            }
+          }
+        } @empty {
+          <p class="texto">Nenhum item nesta comanda.</p>
+        }
+
+        <div class="totais">
+          <div><span>Subtotal</span><span class="num">{{ reais(c.subtotal) }}</span></div>
+          <div>
+            <span>Taxa de serviço ({{ c.taxaPercentual }}%)</span>
+            <span class="num">{{ c.taxaRemovida ? 'Removida' : reais(c.taxaValor) }}</span>
+          </div>
+          <div class="total"><span>Total</span><span class="num">{{ reais(c.total) }}</span></div>
+          <div><span>Pago</span><span class="num">{{ reais(c.pago) }}</span></div>
+        </div>
+        <div class="falta-grande">
+          <span>Falta pagar</span>
+          <b>{{ reais(c.restante) }}</b>
+        </div>
+      </section>
+
+      @if (c.pagamentos && c.pagamentos.length > 0) {
+        <section class="secao" aria-label="Pagamentos já feitos">
+          <h3>Pagamentos já feitos</h3>
+          @for (p of c.pagamentos; track p.id) {
+            <div class="pagamento-linha" [class.estornado]="p.status === 'ESTORNADO'">
+              <span>
+                {{ nomesDosMetodos[p.metodo] }}{{ p.origem === 'RESERVA' ? ' (antecipado)' : '' }}
+                <small>{{ p.criadoEm | date: 'HH:mm' }}{{ p.troco > 0 ? ' · troco ' + reais(p.troco) : '' }}</small>
+              </span>
+              @if (p.status === 'ESTORNADO') {
+                <span class="selo perigo">Estornado</span>
+              }
+              <span class="num">{{ reais(p.valor) }}</span>
+            </div>
+          }
+        </section>
+      }
+
+      @if (c.status === 'ABERTA') {
+        <section class="secao" aria-label="Receber pagamento">
+          <h3>Pagamento</h3>
+
+          @if (!turno()) {
+            <div class="alerta aviso sem-margem" role="status">Abra o caixa para receber pagamentos.</div>
+          } @else if (c.restante > 0) {
+            <div class="metodos" role="radiogroup" aria-label="Forma de pagamento">
+              @for (m of metodos; track m) {
+                <button type="button" class="metodo" role="radio" [attr.aria-checked]="metodo() === m" [class.ativo]="metodo() === m" (click)="escolherMetodo(m)">
+                  {{ nomesDosMetodos[m] }}
+                </button>
+              }
+            </div>
+
+            <div class="campo">
+              <label for="valor">Valor a receber (R$)</label>
+              <input id="valor" class="entrada" type="number" inputmode="decimal" step="0.01" min="0.01" [value]="valor() ?? ''" (input)="valor.set(numero($event))" />
+              <span class="dica-campo">Já vem com o que falta. Mude para receber só uma parte.</span>
+            </div>
+
+            @if (metodo() === 'DINHEIRO') {
+              <div class="campo">
+                <span class="rotulo">Cliente entregou</span>
+                <div class="rapidos">
+                  @if (valor() !== null && valor()! > 0) {
+                    <button type="button" class="rapido" [class.ativo]="recebido() === valor() && !outroValor()" (click)="entregou(valor()!)">{{ reais(valor()!) }} (exato)</button>
+                  }
+                  @for (n of sugestoesDeNota(); track n) {
+                    <button type="button" class="rapido" [class.ativo]="recebido() === n && !outroValor()" (click)="entregou(n)">{{ reais(n) }}</button>
+                  }
+                  <button type="button" class="rapido" [class.ativo]="outroValor()" (click)="outroValor.set(true)">Outro valor</button>
+                </div>
+                @if (outroValor()) {
+                  <input id="recebido" class="entrada" type="number" inputmode="decimal" step="0.01" min="0" aria-label="Dinheiro entregue pelo cliente (R$)" [value]="recebido() ?? ''" (input)="recebido.set(numero($event))" />
+                }
+                @if (troco() > 0) {
+                  <span class="troco">Troco: <b>{{ reais(troco()) }}</b></span>
+                }
+              </div>
+            }
+
+            <div class="receber-fixo">
+              <button type="button" class="btn pri grande" [disabled]="trabalhando()" (click)="receber()">
+                Receber {{ valor() ? reais(valor()!) : '' }}
+              </button>
+            </div>
+          } @else {
+            <p class="texto">A conta está paga.</p>
+          }
+        </section>
+      }
+
+      @if (erroDoPainel()) {
+        <div class="alerta perigo" role="alert">{{ erroDoPainel() }}</div>
+      }
+
+      <section class="secao" aria-label="Fechar comanda">
+        @if (c.status === 'ABERTA') {
+          <h3>Fechar</h3>
+          @if (pendentes().length > 0) {
+            <div class="alerta aviso" role="status">
+              Ainda {{ pendentes().length === 1 ? 'há 1 pedido' : 'há ' + pendentes().length + ' pedidos' }} na cozinha/bar que não ficou pronto. A comanda só fecha depois que ficar pronto.
+            </div>
+          }
+          @if (confirmandoFechar()) {
+            <div class="confirmacao" role="alertdialog" aria-label="Confirmar fechamento">
+              <p>Fechar a comanda {{ c.codigo }} em {{ reais(c.total) }}? Depois de fechada ela não muda mais.</p>
+              <div class="confirmacao-botoes">
+                <button class="btn grande" type="button" (click)="cancelarEdicao()">Voltar</button>
+                <button class="btn pri grande confirmar" type="button" [disabled]="trabalhando()" (click)="fecharComanda()">Fechar comanda</button>
+              </div>
+            </div>
+          } @else if (c.restante <= 0) {
+            <button type="button" class="btn pri grande" [disabled]="!podeFechar() || trabalhando()" (click)="confirmandoFechar.set(true)">Fechar comanda</button>
+          } @else {
+            <p class="texto">Receba o que falta para poder fechar a comanda.</p>
+          }
+        } @else {
+          <p class="texto">Comanda {{ c.status === 'FECHADA' ? 'fechada' : 'cancelada' }}.</p>
+        }
+        @if (c.status !== 'CANCELADA') {
+          <a class="btn grande comprovante" [routerLink]="['/comandas', c.id, 'comprovante']">{{ c.status === 'FECHADA' ? 'Ver comprovante' : 'Ver conta' }}</a>
+        }
+      </section>
+
+      @if (podeGerir()) {
+        <details class="mais">
+          <summary>Mais opções</summary>
+
+          @if (c.status === 'ABERTA') {
+            <div class="mais-bloco">
+              @if (alterandoTaxa()) {
+                <div class="edicao" role="group" aria-label="Taxa de serviço">
+                  @if (!c.taxaRemovida) {
+                    <input class="entrada" type="text" maxlength="120" placeholder="Motivo para remover a taxa" aria-label="Motivo para remover a taxa"
+                      [value]="motivoDaTaxa()" (input)="motivoDaTaxa.set($any($event.target).value)" (keydown.enter)="confirmarTaxa(true)" />
+                    <div class="linha-botoes">
+                      <button type="button" class="btn" (click)="cancelarEdicao()">Voltar</button>
+                      <button type="button" class="btn perigo" [disabled]="trabalhando()" (click)="confirmarTaxa(true)">Remover a taxa</button>
+                    </div>
+                  } @else {
+                    <p class="texto">A taxa foi removida desta comanda. Devolver a taxa de {{ c.taxaPercentual }}%?</p>
+                    <div class="linha-botoes">
+                      <button type="button" class="btn" (click)="cancelarEdicao()">Voltar</button>
+                      <button type="button" class="btn pri" [disabled]="trabalhando()" (click)="confirmarTaxa(false)">Devolver a taxa</button>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <button type="button" class="link" (click)="alterandoTaxa.set(true)">{{ c.taxaRemovida ? 'Devolver a taxa de serviço' : 'Remover a taxa de serviço' }}</button>
+              }
+            </div>
+          }
+
+          @for (p of c.pagamentos ?? []; track p.id) {
+            @if (p.status !== 'ESTORNADO') {
+              <div class="mais-bloco">
+                <span class="texto">{{ nomesDosMetodos[p.metodo] }} · {{ reais(p.valor) }}</span>
+                @if (estornando() === p.id) {
+                  <div class="edicao" role="group" aria-label="Estornar pagamento">
+                    <input class="entrada" type="text" maxlength="120" placeholder="Motivo do estorno" aria-label="Motivo do estorno"
+                      [value]="motivoDoEstorno()" (input)="motivoDoEstorno.set($any($event.target).value)" (keydown.enter)="confirmarEstorno()" />
+                    <div class="linha-botoes">
+                      <button type="button" class="btn" (click)="cancelarEdicao()">Voltar</button>
+                      <button type="button" class="btn perigo" [disabled]="trabalhando()" (click)="confirmarEstorno()">Estornar</button>
+                    </div>
+                  </div>
+                } @else {
+                  <button type="button" class="link perigo" (click)="comecarAEstornar(p)">Estornar este pagamento</button>
+                }
+              </div>
+            }
+          }
+        </details>
+      }
+    </div>
+  </div>
+}

@@ -1,0 +1,94 @@
+<div class="titulo">
+  <div>
+    <h1>Visão geral</h1>
+  </div>
+  <button class="btn" type="button" (click)="carregar()">
+    <svg class="i"><use href="icones.svg#i-rel" /></svg>
+    Atualizar
+  </button>
+</div>
+
+@if (erro()) {
+  <div class="alerta perigo" role="alert">{{ erro() }}</div>
+}
+
+@if (carregando()) {
+  <p class="aviso-vazio">Carregando...</p>
+} @else if (painel(); as p) {
+  <div class="indicadores">
+    <div class="bloco indicador destaque">
+      <span class="rotulo">Faturamento de hoje</span>
+      <strong>{{ moeda(p.faturamentoHoje) }}</strong>
+    </div>
+    <div class="bloco indicador">
+      <span class="rotulo">Comandas fechadas hoje</span>
+      <strong>{{ p.comandasFechadasHoje }}</strong>
+      <small>Ticket médio {{ moeda(p.ticketMedioHoje) }}</small>
+    </div>
+    <div class="bloco indicador">
+      <span class="rotulo">Mesas ocupadas</span>
+      <strong>{{ p.mesasOcupadas }} de {{ p.mesasAtivas }}</strong>
+    </div>
+    <div class="bloco indicador">
+      <span class="rotulo">Comandas abertas</span>
+      <strong>{{ p.comandasAbertas }}</strong>
+    </div>
+    <div class="bloco indicador">
+      <span class="rotulo">Pedidos em andamento</span>
+      <strong>{{ p.pedidosEmAndamento }}</strong>
+    </div>
+    <div class="bloco indicador">
+      <span class="rotulo">Caixa</span>
+      @if (p.operadorDoCaixa) {
+        <strong class="caixa-aberto">Aberto por {{ p.operadorDoCaixa }}</strong>
+      } @else {
+        <strong class="caixa-fechado">Fechado</strong>
+      }
+    </div>
+    <div class="bloco indicador">
+      <span class="rotulo">Estoque</span>
+      @if (p.produtosComEstoqueBaixo > 0) {
+        <strong class="estoque-alerta">
+          {{ p.produtosComEstoqueBaixo }} {{ p.produtosComEstoqueBaixo === 1 ? 'produto abaixo' : 'produtos abaixo' }} do mínimo
+        </strong>
+        <a routerLink="/estoque">Ver estoque</a>
+      } @else {
+        <strong>Tudo em dia</strong>
+      }
+    </div>
+  </div>
+
+  @if (semVendas()) {
+    <section class="bloco">
+      <p class="aviso-vazio">Nenhuma venda hoje ainda.</p>
+    </section>
+  } @else {
+    <div class="grade">
+      <section class="bloco">
+        <h2>Vendas por hora</h2>
+        <div class="grafico" role="list">
+          @for (b of barras(); track b.rotulo) {
+            <div class="coluna" role="listitem" [attr.aria-label]="b.rotulo + ': ' + b.valor" [title]="b.rotulo + ': ' + b.valor">
+              <em>{{ b.curto }}</em>
+              <div class="barra" [style.height.%]="b.altura"></div>
+              <span>{{ b.rotulo }}</span>
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="bloco">
+        <h2>Mais vendidos hoje</h2>
+        @if (p.maisVendidosHoje.length === 0) {
+          <p class="aviso-vazio">Nenhum produto vendido ainda.</p>
+        } @else {
+          <ol class="ranking">
+            @for (item of p.maisVendidosHoje; track item.produto) {
+              <li><span>{{ item.produto }}</span><b>{{ item.quantidade }}</b></li>
+            }
+          </ol>
+        }
+      </section>
+    </div>
+  }
+}

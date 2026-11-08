@@ -1,0 +1,67 @@
+<main class="tela">
+  <app-fundo-de-icones />
+
+  <section class="laranja">
+    <div class="marca-grande">
+      <span class="marca"><b></b></span>
+      <span class="nome">RestON</span>
+    </div>
+
+    <div class="miolo">
+      @if (provisoria()) {
+        <h1>Crie a sua senha</h1>
+        <p class="sub">A senha provisória vale só para o primeiro acesso. Escolha uma senha que só você conhece.</p>
+      } @else {
+        <h1>Alterar senha</h1>
+        <p class="sub">Escolha uma senha nova para a sua conta.</p>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+        <div class="campo">
+          <label for="senhaAtual">{{ provisoria() ? 'Senha provisória' : 'Senha atual' }}</label>
+          <input id="senhaAtual" class="entrada" [type]="tipoDoCampo()" formControlName="senhaAtual" autocomplete="current-password" />
+        </div>
+
+        <div class="campo">
+          <label for="novaSenha">Nova senha</label>
+          <input id="novaSenha" class="entrada" [type]="tipoDoCampo()" formControlName="novaSenha" autocomplete="new-password" />
+        </div>
+
+        <div class="campo">
+          <label for="confirmacao">Repita a nova senha</label>
+          <input id="confirmacao" class="entrada" [type]="tipoDoCampo()" formControlName="confirmacao" autocomplete="new-password" />
+        </div>
+
+        <label class="mostrar">
+          <input type="checkbox" [checked]="mostrar()" (change)="mostrar.set($any($event.target).checked)" />
+          Mostrar as senhas enquanto digito
+        </label>
+
+        <ul class="regras" aria-label="Regras da senha">
+          @for (regra of regras(); track regra.texto) {
+            <li [class.ok]="regra.ok">
+              <svg class="i"><use [attr.href]="regra.ok ? 'icones.svg#i-ok' : 'icones.svg#i-x'" /></svg>
+              {{ regra.texto }}
+            </li>
+          }
+        </ul>
+
+        @if (erro()) {
+          <div class="alerta perigo" role="alert">{{ erro() }}</div>
+        }
+
+        <button class="entrar" type="submit" [disabled]="!podeSalvar() || enviando()">
+          {{ enviando() ? 'Salvando...' : 'Salvar nova senha' }}
+        </button>
+      </form>
+
+      <div class="saida">
+        @if (provisoria()) {
+          <button type="button" class="link" (click)="sair()">Sair</button>
+        } @else {
+          <button type="button" class="link" (click)="voltar()">Voltar</button>
+        }
+      </div>
+    </div>
+  </section>
+</main>

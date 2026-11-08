@@ -1,0 +1,4 @@
+.vazio { max-width: 520px; margin: 40px auto 0; padding: 34px 28px; text-align: center; display: grid; justify-items: center; gap: 10px; }
+.vazio h1 { font-size: 20px; font-weight: 600; }
+.vazio p { margin: 0 0 6px; color: var(--ink-2); }
+.grande { width: 30px; height: 30px; color: var(--acc); }

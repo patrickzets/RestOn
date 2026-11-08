@@ -1,0 +1,67 @@
+<div class="app" [class.menu-aberto]="menuAberto()">
+  <aside class="lateral">
+    <div class="espaco">
+      <span class="marca"><b></b></span>
+      RestON
+    </div>
+
+    @for (grupo of grupos(); track grupo.nome) {
+      <div class="secao">{{ grupo.nome }}</div>
+      @for (modulo of grupo.modulos; track modulo.caminho) {
+        <a class="nav" [routerLink]="'/' + modulo.caminho" routerLinkActive="atual" (click)="menuAberto.set(false)">
+          <svg class="i"><use [attr.href]="'icones.svg#' + modulo.icone" /></svg>
+          {{ modulo.titulo }}
+        </a>
+      }
+    }
+
+    <div class="rodape-lat">
+      @if (usuario(); as u) {
+        <div class="usuario">
+          <span class="avatar">{{ iniciais() }}</span>
+          <div>
+            <b>{{ u.nome }}</b>
+            <small>{{ nomeDoPerfil() }}</small>
+          </div>
+        </div>
+        <div class="acoes-usuario">
+          <button class="link" type="button" (click)="alterarSenha()">Alterar senha</button>
+          <button class="link" type="button" (click)="sair()">Sair</button>
+        </div>
+      }
+    </div>
+  </aside>
+
+  <div class="principal">
+    <header class="barra">
+      <button class="icb menu" type="button" aria-label="Abrir ou fechar o menu" (click)="menuAberto.set(!menuAberto())">
+        <svg class="i"><use href="icones.svg#i-mais-h" /></svg>
+      </button>
+      <div class="migalha">
+        {{ moduloAtual()?.grupo }}
+        <svg class="i seta"><use href="icones.svg#i-baixo" /></svg>
+        <b>{{ moduloAtual()?.titulo }}</b>
+      </div>
+      <div class="dir">
+        @if (!apiOk()) {
+          <span class="vivo fora"><i></i>{{ textoStatus() }}</span>
+        }
+      </div>
+    </header>
+
+    <main class="corpo" [class.com-atalhos]="ehGarcom()">
+      <router-outlet />
+    </main>
+
+    @if (ehGarcom()) {
+      <nav class="atalhos" aria-label="Atalhos do garçom">
+        @for (modulo of atalhosDoGarcom(); track modulo.caminho) {
+          <a [routerLink]="'/' + modulo.caminho" routerLinkActive="atual">
+            <svg class="i"><use [attr.href]="'icones.svg#' + modulo.icone" /></svg>
+            {{ modulo.titulo }}
+          </a>
+        }
+      </nav>
+    }
+  </div>
+</div>

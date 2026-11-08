@@ -1,0 +1,112 @@
+@if (carregando()) {
+  <p class="aviso-vazio">Carregando...</p>
+} @else if (!comanda()) {
+  <div class="alerta perigo" role="alert">{{ erro() }}</div>
+  <a class="btn" routerLink="/mesas">Voltar às mesas</a>
+} @else {
+  <div class="pagina">
+    <header class="cabecalho">
+      <a class="voltar" routerLink="/mesas" aria-label="Voltar às mesas">‹</a>
+      <div>
+        <h1>Mesa {{ comanda()!.mesaNumero }} · Comanda {{ comanda()!.numeroCliente }}</h1>
+        <p>{{ comanda()!.codigo }}</p>
+      </div>
+    </header>
+
+    @if (erro()) {
+      <div class="alerta perigo" role="alert">{{ erro() }}</div>
+    }
+
+    @if (etapa() === 'escolher') {
+      <div class="chips" role="group" aria-label="Categorias">
+        <button type="button" class="chip" [class.ativo]="categoriaEscolhida() === null" (click)="categoriaEscolhida.set(null)">Todos</button>
+        @for (c of categoriasComProduto(); track c.id) {
+          <button type="button" class="chip" [class.ativo]="categoriaEscolhida() === c.id" (click)="categoriaEscolhida.set(c.id)">{{ c.nome }}</button>
+        }
+      </div>
+
+      <input class="entrada busca" type="search" placeholder="Buscar produto" aria-label="Buscar produto" [value]="busca()"
+        (input)="busca.set($any($event.target).value)" />
+
+      <ul class="lista">
+        @for (p of visiveis(); track p.id) {
+          <li class="produto" [class.escolhido]="quantidadeDe(p) > 0" [class.sem-foto]="!urlDaFoto(p)">
+            @if (urlDaFoto(p); as url) {
+              <div class="miniatura">
+                <img [src]="url" [alt]="'Foto de ' + p.nome" loading="lazy" />
+              </div>
+            }
+            <div class="info">
+              <b>{{ p.nome }}</b>
+              <span class="descricao">{{ p.descricao || 'Sem descrição' }}</span>
+              <span class="preco">{{ preco(p.preco) }}</span>
+              @if (avisoDeEstoque(p); as aviso) {
+                <span class="estoque-aviso">{{ aviso }}</span>
+              }
+            </div>
+            <div class="passo">
+              @if (quantidadeDe(p) > 0) {
+                <button type="button" class="mais-menos" [attr.aria-label]="'Tirar um ' + p.nome" (click)="mudarQuantidade(p, -1)">−</button>
+                <span class="quantidade" aria-live="polite">{{ quantidadeDe(p) }}</span>
+              }
+              <button type="button" class="mais-menos forte" [attr.aria-label]="'Adicionar ' + p.nome" [disabled]="quantidadeDe(p) >= limiteDe(p)" (click)="mudarQuantidade(p, 1)">+</button>
+            </div>
+          </li>
+        } @empty {
+          <li class="aviso-vazio">Nenhum produto disponível{{ busca() ? ' para esta busca' : '' }}.</li>
+        }
+      </ul>
+
+      @if (totalDeItens() > 0) {
+        <div class="barra-inferior">
+          <button type="button" class="btn pri grande" (click)="revisar()">
+            Ver pedido · {{ totalDeItens() }} {{ totalDeItens() === 1 ? 'item' : 'itens' }} · {{ preco(totalEstimado()) }}
+          </button>
+        </div>
+      }
+    } @else {
+      <h2 class="titulo-etapa">Revisar e enviar</h2>
+
+      <ul class="lista">
+        @for (l of linhas(); track l.produto.id) {
+          <li class="linha-revisao">
+            <div class="linha-topo">
+              <b>{{ l.quantidade }}× {{ l.produto.nome }}</b>
+              <span class="preco">{{ preco(l.quantidade * l.produto.preco) }}</span>
+            </div>
+            <span class="destino">Vai para: {{ nomesDosDestinos[l.produto.destinoPreparo] }}</span>
+
+            @if (observacoesDe(l.produto).length > 0) {
+              <div class="chips pequenos" role="group" [attr.aria-label]="'Observações de ' + l.produto.nome">
+                @for (o of observacoesDe(l.produto); track o) {
+                  <button type="button" class="chip" [class.ativo]="temObservacao(l, o)" (click)="alternarObservacao(l, o)">{{ o }}</button>
+                }
+              </div>
+            }
+            <input class="entrada" type="text" maxlength="80" placeholder="Outra observação (opcional)" [attr.aria-label]="'Observação de ' + l.produto.nome"
+              [value]="l.observacao" (input)="alterarObservacao(l, $any($event.target).value)" />
+
+            <div class="linha-acoes">
+              <div class="passo">
+                <button type="button" class="mais-menos" aria-label="Tirar um" (click)="mudarQuantidade(l.produto, -1)">−</button>
+                <span class="quantidade">{{ l.quantidade }}</span>
+                <button type="button" class="mais-menos" aria-label="Adicionar um" [disabled]="l.quantidade >= limiteDe(l.produto)" (click)="mudarQuantidade(l.produto, 1)">+</button>
+              </div>
+              <button type="button" class="btn sm" (click)="remover(l)">Remover</button>
+            </div>
+          </li>
+        }
+      </ul>
+
+      <p class="resumo">
+        Será enviado em {{ destinos().length }} {{ destinos().length === 1 ? 'pedido' : 'pedidos' }}: {{ destinos().join(', ') }}.
+        Total sem a taxa de serviço: <b>{{ preco(totalEstimado()) }}</b>.
+      </p>
+
+      <div class="barra-inferior duas">
+        <button type="button" class="btn grande" (click)="voltar()">Voltar</button>
+        <button type="button" class="btn pri grande" [disabled]="enviando()" (click)="enviar()">Enviar pedido</button>
+      </div>
+    }
+  </div>
+}

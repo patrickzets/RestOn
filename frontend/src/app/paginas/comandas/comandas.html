@@ -1,0 +1,234 @@
+<div class="titulo">
+  <div>
+    <h1>Comandas</h1>
+  </div>
+</div>
+
+@if (erroDaLista()) {
+  <div class="alerta perigo" role="alert">{{ erroDaLista() }}</div>
+}
+
+<div class="ferramentas">
+  <div class="filtros" role="group" aria-label="Filtrar por situação">
+    <button type="button" class="filtro" [class.ativo]="filtro() === 'ABERTA'" [attr.aria-pressed]="filtro() === 'ABERTA'" (click)="escolherFiltro('ABERTA')">Abertas</button>
+    <button type="button" class="filtro" [class.ativo]="filtro() === 'FECHADA'" [attr.aria-pressed]="filtro() === 'FECHADA'" (click)="escolherFiltro('FECHADA')">Fechadas</button>
+    <button type="button" class="filtro" [class.ativo]="filtro() === 'CANCELADA'" [attr.aria-pressed]="filtro() === 'CANCELADA'" (click)="escolherFiltro('CANCELADA')">Canceladas</button>
+    <button type="button" class="filtro" [class.ativo]="filtro() === 'TODAS'" [attr.aria-pressed]="filtro() === 'TODAS'" (click)="escolherFiltro('TODAS')">Todas</button>
+  </div>
+  <input class="entrada busca" type="search" placeholder="Buscar por código ou mesa" aria-label="Buscar comanda"
+    [value]="busca()" (input)="busca.set($any($event.target).value)" />
+</div>
+
+<div class="lista-gaveta" [class.com-gaveta]="aberta() !== null">
+  <div class="mesas">
+    @for (g of grupos(); track g.mesaNumero) {
+      <section class="mesa" [attr.aria-label]="'Mesa ' + g.mesaNumero">
+        <header class="mesa-topo">
+          <h2>Mesa {{ g.mesaNumero }}</h2>
+          @if (g.minutosSentados !== null) {
+            <span class="sentados">sentados há {{ duracao(g.minutosSentados) }}</span>
+          }
+        </header>
+
+        @for (c of g.comandas; track c.id) {
+          <button type="button" class="cartao" [class.escolhida]="aberta()?.id === c.id" (click)="abrirDetalhe(c.id)">
+            <span class="cartao-nome">
+              <strong>{{ rotuloDoCliente(c) }}</strong>
+              <span class="codigo">{{ c.codigo }}</span>
+              @if (c.status === 'ABERTA') {
+                <span class="codigo">aberta há {{ duracao(minutosAberta(c)) }}</span>
+              }
+            </span>
+            <span class="cartao-selos">
+              @if (c.status === 'ABERTA') {
+                @let r = resumoDe(c);
+                @if (r.prontos > 0) { <span class="selo ok">{{ r.prontos }} {{ r.prontos === 1 ? 'pronto' : 'prontos' }}</span> }
+                @if (r.naCozinha > 0) { <span class="selo aviso">{{ r.naCozinha }} na cozinha/bar</span> }
+                @if (r.prontos === 0 && r.naCozinha === 0) { <span class="selo">sem pedidos</span> }
+              } @else if (c.status === 'FECHADA') {
+                <span class="selo ok">Fechada</span>
+              } @else {
+                <span class="selo">Cancelada</span>
+              }
+            </span>
+            <span class="cartao-total num">{{ preco(c.total) }}</span>
+          </button>
+        }
+      </section>
+    } @empty {
+      @if (!carregando()) {
+        <p class="aviso-vazio">Nenhuma comanda {{ filtro() === 'ABERTA' ? 'aberta' : 'encontrada' }}. As comandas são abertas na tela de Mesas.</p>
+      }
+    }
+    @if (carregando()) {
+      <p class="aviso-vazio">Carregando...</p>
+    }
+  </div>
+
+  @if (aberta(); as c) {
+    <aside class="gaveta" aria-label="Detalhe da comanda" tabindex="-1" (keydown)="prenderFoco($event)">
+      <div class="cab">
+        <div>
+          <h2>{{ rotuloDoCliente(c) }} · Mesa {{ c.mesaNumero }}</h2>
+          <p>{{ c.codigo }}</p>
+        </div>
+        <button class="fechar" type="button" aria-label="Fechar" (click)="fechar()">
+          <svg class="i"><use href="icones.svg#i-x" /></svg>
+        </button>
+      </div>
+
+      <ng-template #modeloPedido let-ped>
+        @let p = $any(ped); <!-- o contexto do ng-template não tem tipo -->
+        <div class="pedido">
+          <div class="pedido-topo">
+            <span class="destino">{{ nomeDoDestino(p.destino) }} · {{ p.criadoEm | date: 'HH:mm' }}</span>
+            @switch (p.status) {
+              @case ('RECEBIDO') { <span class="selo info">Recebido</span> }
+              @case ('EM_PREPARO') { <span class="selo aviso">Em preparo</span> }
+              @case ('PRONTO') { <span class="selo ok">Pronto</span> }
+              @case ('ENTREGUE') { <span class="selo">Entregue</span> }
+              @case ('CANCELADO') { <span class="selo perigo">Cancelado</span> }
+            }
+          </div>
+
+          @for (i of p.itens; track i.id) {
+            <div class="item" [class.cancelado]="i.cancelado">
+              <div class="item-linha">
+                <span>{{ i.quantidade }}× {{ i.produtoNome }}
+                  @if (i.observacao) { <em class="obs">{{ i.observacao }}</em> }
+                  @if (i.cancelado) { <em class="obs-cancelado">Cancelado: {{ i.motivoCancelamento }}</em> }
+                </span>
+                <span class="num">{{ preco(i.subtotal) }}</span>
+              </div>
+
+              @if (podeCancelar(p, i) && itemCancelando() !== i.id && itemTransferindo() !== i.id && pedidoCancelando() !== p.id) {
+                <div class="item-acoes">
+                  <button type="button" class="link" (click)="comecarATransferir(i)">Transferir</button>
+                  <button type="button" class="link perigo" (click)="comecarACancelarItem(i)">Cancelar item</button>
+                </div>
+              }
+
+              @if (itemCancelando() === i.id) {
+                <div class="edicao" role="group" aria-label="Cancelar item">
+                  <input class="entrada" type="text" maxlength="120" placeholder="Motivo do cancelamento" aria-label="Motivo do cancelamento"
+                    [ngModel]="motivo()" (ngModelChange)="motivo.set($event)" (keydown.enter)="confirmarCancelamentoDoItem()" />
+                  <div class="linha-botoes">
+                    <button type="button" class="btn" (click)="cancelarEdicao()">Voltar</button>
+                    <button type="button" class="btn perigo" [disabled]="trabalhando()" (click)="confirmarCancelamentoDoItem()">Cancelar item</button>
+                  </div>
+                </div>
+              }
+
+              @if (itemTransferindo() === i.id) {
+                <div class="edicao" role="group" aria-label="Transferir item">
+                  <select class="entrada" aria-label="Comanda de destino" [ngModel]="destinoDaTransferencia()" (ngModelChange)="destinoDaTransferencia.set($event)">
+                    <option [ngValue]="null">Escolha a comanda de destino</option>
+                    @for (o of outrasComandas(); track o.id) {
+                      <option [ngValue]="o.id">{{ rotuloDoCliente(o) }} ({{ o.codigo }})</option>
+                    }
+                  </select>
+                  @if (outrasComandas().length === 0) {
+                    <span class="dica-campo">Abra outra comanda nesta mesa para poder transferir.</span>
+                  }
+                  <div class="linha-botoes">
+                    <button type="button" class="btn" (click)="cancelarEdicao()">Voltar</button>
+                    <button type="button" class="btn pri" [disabled]="trabalhando() || !destinoDaTransferencia()" (click)="confirmarTransferencia()">Transferir</button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <div class="pedido-rodape">
+            <span class="subtotal-pedido">Subtotal do pedido <span class="num">{{ preco(subtotalDoPedido(p)) }}</span></span>
+            @if (pedidoCancelavel(p) && pedidoCancelando() !== p.id) {
+              <button type="button" class="link perigo" (click)="comecarACancelarPedido(p)">Cancelar pedido</button>
+            }
+          </div>
+
+          @if (pedidoCancelando() === p.id) {
+            <div class="edicao" role="group" aria-label="Cancelar pedido">
+              <span class="dica-campo">Todos os itens deste pedido serão cancelados.</span>
+              <input class="entrada" type="text" maxlength="120" placeholder="Motivo do cancelamento" aria-label="Motivo do cancelamento do pedido"
+                [ngModel]="motivo()" (ngModelChange)="motivo.set($event)" (keydown.enter)="confirmarCancelamentoDoPedido(p)" />
+              <div class="linha-botoes">
+                <button type="button" class="btn" (click)="cancelarEdicao()">Voltar</button>
+                <button type="button" class="btn perigo" [disabled]="trabalhando()" (click)="confirmarCancelamentoDoPedido(p)">Cancelar pedido</button>
+              </div>
+            </div>
+          }
+        </div>
+      </ng-template>
+
+      <div class="corpo-gaveta">
+        <div class="bloco">
+          <h3>Pedidos</h3>
+          @if (pedidosProntos().length) {
+            <h4 class="secao">Prontos</h4>
+            @for (p of pedidosProntos(); track p.id) {
+              <ng-container [ngTemplateOutlet]="modeloPedido" [ngTemplateOutletContext]="{ $implicit: p }" />
+            }
+          }
+          @if (pedidosNaCozinha().length) {
+            <h4 class="secao">Na cozinha/bar</h4>
+            @for (p of pedidosNaCozinha(); track p.id) {
+              <ng-container [ngTemplateOutlet]="modeloPedido" [ngTemplateOutletContext]="{ $implicit: p }" />
+            }
+          }
+          @if (pedidosAnteriores().length) {
+            <button type="button" class="link anteriores" [attr.aria-expanded]="mostrarAnteriores()" (click)="mostrarAnteriores.set(!mostrarAnteriores())">
+              Anteriores ({{ pedidosAnteriores().length }}) {{ mostrarAnteriores() ? '−' : '+' }}
+            </button>
+            @if (mostrarAnteriores()) {
+              @for (p of pedidosAnteriores(); track p.id) {
+                <ng-container [ngTemplateOutlet]="modeloPedido" [ngTemplateOutletContext]="{ $implicit: p }" />
+              }
+            }
+          }
+          @if (!c.pedidos?.length) {
+            <p class="texto">Nenhum pedido nesta comanda ainda.</p>
+          }
+        </div>
+
+        <div class="bloco totais">
+          <div><span>Subtotal</span><span class="num">{{ preco(c.subtotal) }}</span></div>
+          <div><span>Taxa de serviço ({{ c.taxaPercentual }}%)</span><span class="num">{{ c.taxaRemovida ? 'Removida' : preco(c.taxaValor) }}</span></div>
+          <div class="total"><span>Total</span><span class="num">{{ preco(c.total) }}</span></div>
+          @if (c.pago > 0) {
+            <div><span>Pago</span><span class="num">{{ preco(c.pago) }}</span></div>
+            <div><span>Falta pagar</span><span class="num">{{ preco(c.restante) }}</span></div>
+          }
+        </div>
+
+        @if (erroDoPainel()) {
+          <div class="bloco">
+            <div class="alerta perigo sem-margem" role="alert">{{ erroDoPainel() }}</div>
+          </div>
+        }
+
+        @if (c.status === 'ABERTA' && podeOperar() && semItensAtivos(c)) {
+          <div class="bloco zona-cancelar">
+            @if (confirmandoCancelarComanda()) {
+              <div class="confirmacao" role="alertdialog" aria-label="Cancelar comanda">
+                <p>Cancelar a comanda {{ c.codigo }}? Ela não tem nenhum item ativo e deixará de aparecer entre as abertas. Não dá para desfazer.</p>
+                <div class="linha-botoes">
+                  <button class="btn" type="button" (click)="confirmandoCancelarComanda.set(false)">Voltar</button>
+                  <button class="btn confirmar-vermelho" type="button" [disabled]="trabalhando()" (click)="cancelarComanda()">Cancelar comanda</button>
+                </div>
+              </div>
+            } @else {
+              <button class="link perigo" type="button" (click)="confirmandoCancelarComanda.set(true)">Cancelar comanda</button>
+            }
+          </div>
+        }
+      </div>
+
+      @if (c.status === 'ABERTA' && podeOperar()) {
+        <div class="rodape-fixo">
+          <a class="btn pri grande" [routerLink]="['/comandas', c.id, 'pedido']">Lançar pedido</a>
+          <a class="btn grande" [routerLink]="['/comandas', c.id, 'comprovante']">Ver a conta</a>
+        </div>
+      }
+    </aside>
+  }
+</div>

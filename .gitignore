@@ -1,0 +1,44 @@
+# Segredos e configuração local
+.env
+.env.*
+!.env.example
+*.local
+
+# Dependências e arquivos gerados
+node_modules/
+target/
+dist/
+.angular/
+out-tsc/
+coverage/
+
+# Fotos enviadas pelos usuários (as fotos da demonstração ficam em backend/src/main/resources/demo/fotos)
+uploads/
+
+# Testes ponta a ponta (navegador)
+test-results/
+playwright-report/
+__screenshots__/
+
+# Logs e temporários
+*.log
+*.tmp
+*.bak
+HELP.md
+
+# Vídeos, áudios e rascunhos de apresentação (pesados: use Releases ou o Drive)
+*.mp4
+*.webm
+*.wav
+*.mov
+scratch/
+tmp/
+
+# Editores e sistema
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+desktop.ini

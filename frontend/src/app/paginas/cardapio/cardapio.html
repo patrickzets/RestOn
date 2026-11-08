@@ -1,0 +1,328 @@
+<div class="titulo">
+  <div>
+    <h1>Cardápio</h1>
+  </div>
+  <div class="acoes-titulo">
+    <button class="btn" type="button" (click)="abrirCategorias()">Categorias</button>
+    <button class="btn pri" type="button" [disabled]="categorias().length === 0" (click)="novo()">
+      <svg class="i"><use href="icones.svg#i-mais" /></svg>
+      Novo produto
+    </button>
+  </div>
+</div>
+
+@if (erroDaLista()) {
+  <div class="alerta perigo" role="alert">{{ erroDaLista() }}</div>
+}
+
+<div class="barra">
+  <div class="abas" role="group" aria-label="Filtrar por categoria">
+    <button type="button" class="aba" [class.ativa]="categoriaEscolhida() === null" (click)="categoriaEscolhida.set(null)">
+      Todos <span>{{ listaBase().length }}</span>
+    </button>
+    @for (c of categorias(); track c.id) {
+      <button type="button" class="aba" [class.ativa]="categoriaEscolhida() === c.id" (click)="categoriaEscolhida.set(c.id)">
+        {{ c.nome }} <span>{{ contagemPorCategoria().get(c.id) ?? 0 }}</span>
+      </button>
+    }
+  </div>
+</div>
+
+<div class="ferramentas">
+  <label class="busca">
+    <svg class="i"><use href="icones.svg#i-busca" /></svg>
+    <input class="entrada" type="search" placeholder="Buscar produto" aria-label="Buscar produto" [value]="busca()" (input)="busca.set($any($event.target).value)" />
+  </label>
+  <label class="marcar">
+    <input type="checkbox" [checked]="mostrarArquivados()" (change)="mostrarArquivados.set($any($event.target).checked)" />
+    Mostrar arquivados
+  </label>
+  <div class="modos" role="group" aria-label="Forma de exibição">
+    <button type="button" [class.ativo]="modo() === 'cards'" (click)="modo.set('cards')">Cards</button>
+    <button type="button" [class.ativo]="modo() === 'lista'" (click)="modo.set('lista')">Lista</button>
+  </div>
+</div>
+
+<div class="lista-gaveta" [class.com-gaveta]="painel() !== 'fechado'">
+  <div class="tab">
+    @if (carregando()) {
+      <p class="aviso-vazio">Carregando...</p>
+    } @else if (categorias().length === 0) {
+      <p class="aviso-vazio">Comece criando uma categoria (por exemplo, Pratos ou Bebidas) em "Categorias".</p>
+    } @else if (visiveis().length === 0) {
+      <p class="aviso-vazio">{{ listaBase().length === 0 ? 'Nenhum produto cadastrado. Use "Novo produto" para começar.' : 'Nenhum produto encontrado.' }}</p>
+    } @else if (modo() === 'cards') {
+      <div class="grade">
+        @for (p of visiveis(); track p.id) {
+          <article class="produto" [class.escolhido]="selecionadoId() === p.id" [class.apagado]="!p.disponivel || !p.ativo" (click)="editar(p)">
+            <div class="foto" [class.vazia]="!urlDaFoto(p)">
+              @if (urlDaFoto(p); as url) {
+                <img [src]="url" [alt]="'Foto de ' + p.nome" loading="lazy" />
+              } @else {
+                <svg class="i sem-foto"><use href="icones.svg#i-imagem" /></svg>
+              }
+              <span class="destino">{{ nomesDosDestinos[p.destinoPreparo] }}</span>
+              @if (!p.ativo) {
+                <span class="situacao">Arquivado</span>
+              } @else if (!p.disponivel) {
+                <span class="situacao">Indisponível</span>
+              } @else if (p.controlaEstoque && p.estoqueAtual === 0) {
+                <span class="situacao">Esgotado</span>
+              }
+            </div>
+            <div class="corpo">
+              <div class="linha-nome">
+                <b>{{ p.nome }}</b>
+                <span class="preco">{{ preco(p.preco) }}</span>
+              </div>
+              <p class="descricao">{{ p.descricao || 'Sem descrição.' }}</p>
+              <div class="rodape">
+                <span class="tempo">
+                  @if (p.tempoPreparoMin > 0) {
+                    <svg class="i"><use href="icones.svg#i-relogio" /></svg>
+                    {{ p.tempoPreparoMin }} min
+                  }
+                </span>
+                @if (p.ativo) {
+                  <button type="button" class="chave" role="switch" [class.ligada]="p.disponivel" [attr.aria-checked]="p.disponivel"
+                    [attr.aria-label]="'Disponível: ' + p.nome" (click)="alternarDisponibilidade(p, $event)"></button>
+                }
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+    } @else {
+      <table class="tabela">
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Categoria</th>
+            <th>Destino</th>
+            <th>Preparo</th>
+            <th>Preço</th>
+            <th>Disponível</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of visiveis(); track p.id) {
+            <tr class="clicavel" [class.escolhida]="selecionadoId() === p.id" (click)="editar(p)">
+              <td>
+                <span class="item-lista">
+                  <span class="mini">
+                    @if (urlDaFoto(p); as url) {
+                      <img [src]="url" [alt]="'Foto de ' + p.nome" loading="lazy" />
+                    } @else {
+                      <svg class="i"><use href="icones.svg#i-imagem" /></svg>
+                    }
+                  </span>
+                  <b>{{ p.nome }}</b>
+                  @if (!p.ativo) {
+                    <span class="selo">Arquivado</span>
+                  }
+                </span>
+              </td>
+              <td>{{ p.categoriaNome }}</td>
+              <td>{{ nomesDosDestinos[p.destinoPreparo] }}</td>
+              <td class="num">{{ p.tempoPreparoMin > 0 ? p.tempoPreparoMin + ' min' : '—' }}</td>
+              <td class="num">{{ preco(p.preco) }}</td>
+              <td>
+                @if (p.ativo) {
+                  <button type="button" class="chave" role="switch" [class.ligada]="p.disponivel" [attr.aria-checked]="p.disponivel"
+                    [attr.aria-label]="'Disponível: ' + p.nome" (click)="alternarDisponibilidade(p, $event)"></button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+  @if (painel() === 'categorias') {
+    <aside class="gaveta" appGaveta (fechar)="fechar()" aria-label="Categorias">
+      <div class="cab">
+        <div>
+          <h2>Categorias</h2>
+          <p>A ordem daqui é a ordem das abas.</p>
+        </div>
+        <button class="fechar" type="button" aria-label="Fechar" (click)="fechar()">
+          <svg class="i"><use href="icones.svg#i-x" /></svg>
+        </button>
+      </div>
+
+      <div class="bloco">
+        @for (c of categorias(); track c.id; let primeira = $first; let ultima = $last) {
+          <div class="categoria">
+            @if (categoriaEditando() === c.id) {
+              <input class="entrada" type="text" aria-label="Novo nome da categoria" [value]="nomeEditado()"
+                (input)="nomeEditado.set($any($event.target).value)" (keydown.enter)="salvarNome()" />
+              <button class="btn" type="button" [disabled]="salvando()" (click)="salvarNome()">Salvar</button>
+              <button class="btn" type="button" (click)="categoriaEditando.set(null)">Cancelar</button>
+            } @else {
+              <span class="nome-categoria">{{ c.nome }} <small>{{ c.qtdProdutos }}</small></span>
+              <button class="icone-btn" type="button" aria-label="Subir" [disabled]="primeira || salvando()" (click)="moverCategoria(c, 'subir')">
+                <svg class="i"><use href="icones.svg#i-sobe" /></svg>
+              </button>
+              <button class="icone-btn" type="button" aria-label="Descer" [disabled]="ultima || salvando()" (click)="moverCategoria(c, 'descer')">
+                <svg class="i"><use href="icones.svg#i-desce" /></svg>
+              </button>
+              @if (categoriaExcluindo() === c.id) {
+                <span class="confirma-exclusao">Excluir "{{ c.nome }}"?</span>
+                <button class="btn perigo" type="button" [disabled]="salvando()" (click)="excluirCategoria(c)">Sim, excluir</button>
+                <button class="btn" type="button" (click)="categoriaExcluindo.set(null)">Cancelar</button>
+              } @else {
+                <button class="btn" type="button" (click)="comecarARenomear(c)">Renomear</button>
+                <button class="btn perigo" type="button" [disabled]="salvando()" (click)="categoriaExcluindo.set(c.id)">Excluir</button>
+              }
+            }
+          </div>
+        } @empty {
+          <p class="texto">Nenhuma categoria ainda.</p>
+        }
+      </div>
+
+      <div class="bloco">
+        <div class="campo">
+          <label for="novaCategoria">Nova categoria</label>
+          <div class="troca">
+            <input id="novaCategoria" class="entrada" type="text" placeholder="Ex.: Sobremesas" [value]="novaCategoria()"
+              (input)="novaCategoria.set($any($event.target).value)" (keydown.enter)="adicionarCategoria()" />
+            <button class="btn pri" type="button" [disabled]="salvando()" (click)="adicionarCategoria()">Adicionar</button>
+          </div>
+        </div>
+        @if (erroDoPainel()) {
+          <div class="alerta perigo sem-margem" role="alert">{{ erroDoPainel() }}</div>
+        }
+      </div>
+    </aside>
+  }
+
+  @if (painel() === 'novo' || painel() === 'editar') {
+    <aside class="gaveta" appGaveta (fechar)="fechar()" aria-label="Dados do produto">
+      <div class="foto-grande">
+        @if (fotoDaGaveta(); as url) {
+          <img [src]="url" alt="Foto do produto" />
+        } @else {
+          <div class="sem-foto-grande">
+            <svg class="i"><use href="icones.svg#i-imagem" /></svg>
+            <span>Sem foto</span>
+          </div>
+        }
+        <div class="acoes-foto">
+          <label class="btn sm" for="arquivoFoto">
+            <svg class="i"><use href="icones.svg#i-enviar" /></svg>
+            {{ fotoDaGaveta() ? 'Trocar imagem' : 'Adicionar imagem' }}
+          </label>
+          @if (fotoDaGaveta()) {
+            <button class="btn sm" type="button" [disabled]="salvando()" (click)="removerFoto()">Remover</button>
+          }
+        </div>
+        <input id="arquivoFoto" class="oculto" type="file" accept="image/jpeg,image/png,image/webp" (change)="escolherFoto($event)" />
+      </div>
+
+      <div class="cab">
+        <div>
+          <h2>{{ painel() === 'novo' ? 'Novo produto' : selecionado()?.nome }}</h2>
+          <p>{{ painel() === 'novo' ? 'JPG, PNG ou WebP de até 5 MB.' : 'Editando produto do cardápio' }}</p>
+        </div>
+        <button class="fechar" type="button" aria-label="Fechar" (click)="fechar()">
+          <svg class="i"><use href="icones.svg#i-x" /></svg>
+        </button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="salvar()" class="bloco" novalidate>
+        <div class="campo">
+          <label for="nome">Nome</label>
+          <input id="nome" class="entrada" type="text" formControlName="nome" [class.invalida]="invalido('nome')" />
+          @if (invalido('nome')) {
+            <span class="msg-erro">Informe o nome (de 2 a 100 letras).</span>
+          }
+        </div>
+
+        <div class="campo">
+          <label for="descricao">Descrição</label>
+          <textarea id="descricao" class="entrada" rows="3" formControlName="descricao" [class.invalida]="invalido('descricao')"></textarea>
+          <span class="dica-campo contador">Aparece no cardápio e na comanda · {{ form.controls.descricao.value.length }} de 160</span>
+          @if (invalido('descricao')) {
+            <span class="msg-erro">A descrição pode ter no máximo 160 caracteres.</span>
+          }
+        </div>
+
+        <div class="dois">
+          <div class="campo">
+            <label for="categoriaId">Categoria</label>
+            <select id="categoriaId" class="entrada" formControlName="categoriaId" [class.invalida]="invalido('categoriaId')">
+              @for (c of categorias(); track c.id) {
+                <option [ngValue]="c.id">{{ c.nome }}</option>
+              }
+            </select>
+          </div>
+          <div class="campo">
+            <label for="preco">Preço (R$)</label>
+            <input id="preco" class="entrada" type="number" step="0.01" min="0.01" formControlName="preco" [class.invalida]="invalido('preco')" />
+            @if (invalido('preco')) {
+              <span class="msg-erro">Informe um valor maior que zero.</span>
+            }
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="tempoPreparoMin">Tempo de preparo (min)</label>
+          <input id="tempoPreparoMin" class="entrada" type="number" min="0" max="240" formControlName="tempoPreparoMin" [class.invalida]="invalido('tempoPreparoMin')" />
+          @if (invalido('tempoPreparoMin')) {
+            <span class="msg-erro">De 0 a 240 minutos.</span>
+          }
+        </div>
+
+        <div class="campo">
+          <span class="rotulo" id="rotuloDestino">Destino do preparo</span>
+          <div class="segmentos" role="radiogroup" aria-labelledby="rotuloDestino">
+            @for (d of destinos; track d) {
+              <label class="segmento">
+                <input type="radio" formControlName="destinoPreparo" [value]="d" />
+                <span>{{ nomesDosDestinos[d] }}</span>
+              </label>
+            }
+          </div>
+          <span class="dica-campo">Define para onde o pedido vai: cozinha, bar ou direto para o salão.</span>
+        </div>
+
+        @if (erroDoPainel()) {
+          <div class="alerta perigo" role="alert">{{ erroDoPainel() }}</div>
+        }
+
+        <button class="btn pri grande" type="submit" [disabled]="salvando()">
+          {{ painel() === 'novo' ? 'Criar produto' : 'Salvar alterações' }}
+        </button>
+      </form>
+
+      @if (painel() === 'editar' && selecionado(); as p) {
+        <div class="bloco">
+          <h3>Venda</h3>
+          @if (p.ativo) {
+            <div class="linha-chave">
+              <span>Disponível para venda</span>
+              <button type="button" class="chave" role="switch" [class.ligada]="p.disponivel" [attr.aria-checked]="p.disponivel"
+                aria-label="Disponível para venda" (click)="alternarDisponibilidade(p)"></button>
+            </div>
+          }
+
+          @if (confirmandoArquivar()) {
+            <div class="confirmacao" role="alertdialog">
+              <p>Arquivar {{ p.nome }}? Ele some do cardápio da equipe, mas o cadastro fica guardado.</p>
+              <div class="linha-botoes">
+                <button class="btn pri" type="button" [disabled]="salvando()" (click)="mudarAtivo(false)">Arquivar</button>
+                <button class="btn" type="button" (click)="confirmandoArquivar.set(false)">Cancelar</button>
+              </div>
+            </div>
+          } @else if (p.ativo) {
+            <button class="btn perigo" type="button" (click)="confirmandoArquivar.set(true)">Arquivar produto</button>
+          } @else {
+            <button class="btn" type="button" [disabled]="salvando()" (click)="mudarAtivo(true)">Restaurar produto</button>
+          }
+        </div>
+      }
+    </aside>
+  }
+</div>

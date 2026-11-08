@@ -1,0 +1,135 @@
+/* Cores das mesas: verde livre, azul ocupada, amarelo reservada, lilás aguardando limpeza, laranja da marca para pedido pronto */
+.setor, .legenda, .grade-mesas { --limpar: #6B4FBB; --limpar-bg: #F0EBFB; }
+
+/* Barra de cima: ir para a mesa e filtros */
+.barra-mesas { display: flex; align-items: center; gap: 12px 18px; flex-wrap: wrap; margin-bottom: 12px; }
+.ir { display: flex; align-items: center; gap: 8px; }
+.ir label { font-size: 13px; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
+.ir .entrada { width: 84px; height: 38px; }
+.ir .btn { min-height: 38px; }
+.erro-numero { margin: -4px 0 10px; }
+.filtros { display: flex; gap: 8px; flex-wrap: wrap; }
+.filtro { height: 36px; padding: 0 14px; border: 1px solid var(--linha); border-radius: 99px; background: var(--bg); color: var(--ink-2); font: inherit; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.filtro:hover { background: var(--bg-sutil); }
+.filtro.ativo { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.filtro span { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.setores { flex-basis: 100%; }
+
+/* Grade compacta: 60 mesas cabem em uma tela de tablet */
+.setor { margin-bottom: 20px; }
+.setor-t { font-size: 14px; font-weight: 600; margin-bottom: 10px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.setor-t span { color: var(--ink-3); font-weight: 400; font-size: 12.5px; }
+.grade-mesas { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px; }
+
+.mt { position: relative; height: 76px; border: 1px solid var(--linha); border-radius: 12px; background: var(--bg); color: var(--ink); font: inherit; text-align: left; padding: 8px 10px; display: grid; align-content: space-between; cursor: pointer; }
+.mt b { font-size: 22px; letter-spacing: -0.02em; line-height: 1; }
+.mt small { font-size: 12px; color: var(--ink-3); line-height: 1; min-height: 12px; }
+/* Poucas mesas no setor: tiles maiores, para o salão não parecer vazio */
+.grade-mesas.folgada { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 14px; }
+.folgada .mt { height: 108px; padding: 12px 14px; }
+.folgada .mt b { font-size: 32px; }
+.folgada .mt small { font-size: 14px; min-height: 14px; }
+.mt:hover { background: var(--bg-sutil); }
+.mt.livre { background: var(--ok-bg); border-color: var(--ok-bg); }
+.mt.livre b { color: var(--ok); }
+/* Ocupada é a que pede atenção: azul cheio, bem diferente do verde claro da livre */
+.mt.ocup { background: var(--info); border-color: var(--info); color: #fff; }
+.mt.ocup b, .mt.ocup small { color: #fff; font-weight: 700; }
+.mt.ocup:hover { filter: brightness(1.08); background: var(--info); }
+.mt.res { background: var(--aviso-bg); border-color: var(--aviso-bg); }
+.mt.res small { color: #7A4C00; font-weight: 600; }
+.mt.aguard { background: var(--limpar-bg); border-color: var(--limpar-bg); }
+.mt.aguard b, .mt.aguard small { color: var(--limpar); }
+.mt.aguard small { font-weight: 600; }
+.mt.desativada { opacity: 0.5; }
+.mt.pronto { background: var(--acc); border-color: var(--acc); color: #fff; }
+.mt.pronto b, .mt.pronto small { color: #fff; font-weight: 700; }
+.mt.minha { outline: 2px solid var(--ink); outline-offset: 2px; }
+.mt .n-p { position: absolute; top: -7px; right: -7px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 99px; background: #fff; color: var(--acc-ink); font-size: 12px; font-weight: 800; display: grid; place-items: center; border: 2px solid var(--acc); }
+
+.legenda { display: flex; gap: 8px 18px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-2); margin-top: 6px; }
+.legenda span { display: flex; align-items: center; gap: 7px; }
+.legenda i { width: 22px; height: 14px; border-radius: 4px; border: 1px solid var(--ok-bg); background: var(--ok-bg); }
+.legenda i.o { background: var(--info); border-color: var(--info); }
+.legenda i.r { background: var(--aviso-bg); border-color: var(--aviso-bg); }
+.legenda i.p { background: var(--acc); border-color: var(--acc); }
+.legenda i.a { background: var(--limpar-bg); border-color: var(--limpar-bg); }
+.legenda i.m { outline: 2px solid var(--ink); outline-offset: 1px; }
+
+/* Janela por cima da lista */
+.fundo { position: fixed; inset: 0; z-index: 50; background: rgba(23, 21, 18, 0.5); display: grid; place-items: center; padding: 16px; }
+.janela { width: min(100%, 620px); max-height: min(100%, 860px); background: var(--bg); border-radius: 14px; box-shadow: 0 24px 60px -16px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; overflow: hidden; outline: none; }
+.janela.estreita { width: min(100%, 460px); }
+.j-cab { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 20px 12px; border-bottom: 1px solid var(--linha); }
+.j-cab h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+.j-cab p { margin: 3px 0 0; color: var(--ink-3); font-size: 13px; }
+.sub-mesa span { white-space: nowrap; }
+.j-cab-acoes { display: flex; align-items: center; gap: 8px; }
+.fechar { width: 36px; height: 36px; }
+.j-corpo { padding: 16px 20px max(16px, env(safe-area-inset-bottom, 0px)); overflow-y: auto; display: grid; gap: 14px; align-content: start; }
+.j-rodape { padding: 12px 20px max(16px, env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--linha); background: var(--bg); display: grid; gap: 8px; }
+a.btn { text-decoration: none; }
+.btn.grande { min-height: 48px; }
+
+/* Abas das comandas */
+.abas-topo { display: flex; gap: 8px; align-items: flex-start; justify-content: space-between; }
+.abas { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; flex: 1; min-width: 0; }
+.aba { height: 40px; padding: 0 16px; border: 1px solid var(--linha); border-radius: 99px; background: var(--bg); color: var(--ink-2); font: inherit; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.aba.ativa { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.aba.encerrada { opacity: 0.6; }
+.aba small { font-size: 11.5px; color: var(--ink-3); }
+.aba.nova { flex: none; border: 1.5px dashed var(--ink-3); background: transparent; color: var(--ink-2); }
+
+/* Pedidos da comanda */
+.grupo-ped { display: grid; gap: 8px; }
+.grupo-ped h3 { font-size: 12.5px; font-weight: 600; color: var(--ink-3); margin: 0; }
+.para-levar { border: 2px solid var(--acc); background: var(--acc-soft); border-radius: 12px; padding: 12px; }
+.para-levar h3 { color: var(--acc-ink); font-size: 13.5px; }
+.ped { display: grid; gap: 6px; }
+.ped ul, .anteriores ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ped li, .anteriores li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 10px; font-size: 15px; }
+.ped li.cancelado, .anteriores li.cancelado { text-decoration: line-through; color: var(--ink-3); }
+.obs { flex-basis: 100%; font-style: normal; font-size: 13px; font-weight: 600; color: var(--aviso); }
+.grupo-ped:not(.para-levar) .ped { border: 1px solid var(--linha); border-radius: 10px; padding: 10px 12px; }
+.link { padding: 0; border: 0; background: none; color: var(--ink-3); font: inherit; font-size: 12.5px; text-decoration: underline; cursor: pointer; justify-self: start; min-height: 28px; }
+.link.mais { justify-self: center; min-height: 36px; }
+.vazio-comanda { text-align: center; padding: 12px 0; }
+.anteriores { border: 1px solid var(--linha); border-radius: 10px; padding: 10px 12px; font-size: 13px; color: var(--ink-2); }
+.anteriores summary { cursor: pointer; }
+.anteriores ul { margin-top: 8px; }
+
+.totais { display: grid; gap: 4px; font-size: 13.5px; color: var(--ink-2); padding-top: 4px; }
+.totais div { display: flex; justify-content: space-between; }
+.totais .total { color: var(--ink); font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+
+/* Confirmações: dizem o que vai acontecer, e o "Voltar" vem primeiro */
+.confirma { border: 1px solid var(--linha-forte); border-radius: 12px; padding: 14px; display: grid; gap: 10px; background: var(--bg-sutil); }
+.confirma b { font-size: 15px; }
+.confirma p { margin: 0; font-size: 13.5px; color: var(--ink-2); }
+.dupla { display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; }
+.dupla .btn { min-height: 44px; justify-content: center; }
+.mais-acoes { display: grid; gap: 12px; padding-top: 4px; }
+
+@media (max-width: 600px) {
+  /* Celular: tiles do tamanho normal (3 por linha) e rolagem dos filtros sem barra */
+  .grade-mesas.folgada { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; }
+  .folgada .mt { height: 80px; padding: 8px 10px; }
+  .folgada .mt b { font-size: 24px; }
+  .filtros { scrollbar-width: none; }
+  .filtros::-webkit-scrollbar { display: none; }
+  .titulo p { display: none; }
+  /* Filtros em uma linha que rola para o lado, para a primeira mesa aparecer mais cedo */
+  .filtros { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; margin-right: -16px; }
+  .filtro { flex: none; }
+  .ir { width: 100%; }
+  .ir .entrada { flex: 1; }
+  .grade-mesas { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; }
+  .mt { height: 70px; }
+  .fundo { padding: 0; place-items: end stretch; }
+  .janela, .janela.estreita { width: 100%; max-height: 94%; border-radius: 14px 14px 0 0; }
+  .j-cab-acoes .btn { white-space: nowrap; }
+  .j-rodape { max-height: 52vh; overflow-y: auto; }
+  .link { min-height: 44px; display: inline-flex; align-items: center; }
+  .link.mais { justify-content: center; }
+  .abas-topo { flex-wrap: wrap; }
+}

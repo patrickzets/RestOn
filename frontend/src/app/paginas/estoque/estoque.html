@@ -1,0 +1,203 @@
+<div class="titulo">
+  <div>
+    <h1>Estoque</h1>
+  </div>
+</div>
+
+@if (erroDaLista()) {
+  <div class="alerta perigo" role="alert">{{ erroDaLista() }}</div>
+}
+
+<div class="barra">
+  <div class="abas" role="group" aria-label="Filtrar produtos">
+    <button type="button" class="aba" [class.ativa]="filtro() === 'controlados'" (click)="filtro.set('controlados')">
+      Controlados <span>{{ contagem().controlados }}</span>
+    </button>
+    <button type="button" class="aba" [class.ativa]="filtro() === 'alerta'" (click)="filtro.set('alerta')">
+      Em alerta <span [class.alerta-num]="contagem().alerta > 0">{{ contagem().alerta }}</span>
+    </button>
+    <button type="button" class="aba" [class.ativa]="filtro() === 'sem-controle'" (click)="filtro.set('sem-controle')">
+      Sem controle <span>{{ contagem().semControle }}</span>
+    </button>
+  </div>
+  <label class="busca">
+    <svg class="i"><use href="icones.svg#i-busca" /></svg>
+    <input class="entrada" type="search" placeholder="Buscar produto" aria-label="Buscar produto" [value]="busca()" (input)="busca.set($any($event.target).value)" />
+  </label>
+</div>
+
+<div class="lista-gaveta" [class.com-gaveta]="selecionado() !== null">
+  <div class="tab">
+    <table class="tabela">
+      <thead>
+        <tr>
+          <th>Produto</th>
+          <th class="num">Saldo</th>
+          <th class="num">Mínimo</th>
+          <th>Situação</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (i of visiveis(); track i.produtoId) {
+          <tr class="clicavel" [class.escolhida]="selecionadoId() === i.produtoId" (click)="abrir(i)">
+            <td>
+              <b>{{ i.nome }}</b>
+              <small class="categoria">{{ i.categoriaNome }}</small>
+            </td>
+            <td class="num">{{ i.controla ? i.quantidade : '—' }}</td>
+            <td class="num">{{ i.controla ? i.minimo : '—' }}</td>
+            <td>
+              @switch (i.situacao) {
+                @case ('OK') { <span class="selo ok">Em dia</span> }
+                @case ('BAIXO') { <span class="selo aviso">Baixo</span> }
+                @case ('ZERADO') { <span class="selo perigo">Esgotado</span> }
+                @default { <span class="selo">Sem controle</span> }
+              }
+            </td>
+          </tr>
+        } @empty {
+          @if (!carregando()) {
+            <tr>
+              <td colspan="4" class="aviso-vazio">
+                @switch (filtro()) {
+                  @case ('alerta') { Nenhum produto abaixo do mínimo. }
+                  @case ('sem-controle') { Todos os produtos já têm controle de estoque. }
+                  @default { Nenhum produto controlado ainda. Abra um produto em "Sem controle" para ligar o controle. }
+                }
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+    @if (carregando()) {
+      <p class="aviso-vazio">Carregando...</p>
+    }
+  </div>
+
+  @if (selecionado(); as item) {
+    <aside class="gaveta" appGaveta (fechar)="fechar()" aria-label="Estoque do produto">
+      <div class="cab">
+        <div>
+          <h2>{{ item.nome }}</h2>
+          <p>{{ item.categoriaNome }}</p>
+        </div>
+        <button class="fechar" type="button" aria-label="Fechar" (click)="fechar()">
+          <svg class="i"><use href="icones.svg#i-x" /></svg>
+        </button>
+      </div>
+
+      @if (aviso()) {
+        <div class="alerta ok" role="status">{{ aviso() }}</div>
+      }
+      @if (erroDoPainel()) {
+        <div class="alerta perigo" role="alert">{{ erroDoPainel() }}</div>
+      }
+
+      @if (item.controla) {
+        <div class="bloco saldo">
+          <div>
+            <span class="rotulo">Saldo</span>
+            <strong [class.baixo]="item.situacao !== 'OK'">{{ item.quantidade }}</strong>
+          </div>
+          <div>
+            <span class="rotulo">Mínimo</span>
+            <strong>{{ item.minimo }}</strong>
+          </div>
+        </div>
+
+        <form class="bloco" [formGroup]="formEntrada" (ngSubmit)="registrarEntrada()" novalidate>
+          <h3>Entrada de mercadoria</h3>
+          <div class="dois">
+            <div class="campo">
+              <label for="entrada-qtd">Quantidade</label>
+              <input id="entrada-qtd" class="entrada" type="number" min="1" formControlName="quantidade" [class.invalida]="invalido('entrada', 'quantidade')" />
+            </div>
+            <div class="campo">
+              <label for="entrada-obs">Observação</label>
+              <input id="entrada-obs" class="entrada" type="text" maxlength="120" placeholder="Ex.: nota 1234" formControlName="observacao" />
+            </div>
+          </div>
+          @if (invalido('entrada', 'quantidade')) {
+            <span class="msg-erro">Informe uma quantidade de 1 a 100.000.</span>
+          }
+          <button class="btn pri" type="submit" [disabled]="salvando()">Registrar entrada</button>
+        </form>
+
+        <form class="bloco" [formGroup]="formAjuste" (ngSubmit)="registrarAjuste()" novalidate>
+          <h3>Contagem do estoque</h3>
+          <p class="dica">Use quando o que está na prateleira é diferente do saldo. O motivo fica registrado.</p>
+          <div class="dois">
+            <div class="campo">
+              <label for="ajuste-qtd">Quantidade contada</label>
+              <input id="ajuste-qtd" class="entrada" type="number" min="0" formControlName="quantidade" [class.invalida]="invalido('ajuste', 'quantidade')" />
+            </div>
+            <div class="campo">
+              <label for="ajuste-motivo">Motivo</label>
+              <input id="ajuste-motivo" class="entrada" type="text" maxlength="120" placeholder="Ex.: quebra, perda" formControlName="motivo" [class.invalida]="invalido('ajuste', 'motivo')" />
+            </div>
+          </div>
+          @if (invalido('ajuste', 'motivo')) {
+            <span class="msg-erro">Explique o motivo (de 3 a 120 letras).</span>
+          }
+          <button class="btn" type="submit" [disabled]="salvando()">Ajustar saldo</button>
+        </form>
+
+        <form class="bloco" [formGroup]="formControle" (ngSubmit)="salvarControle(true)" novalidate>
+          <h3>Estoque mínimo</h3>
+          <div class="campo">
+            <label for="minimo">Avisar quando restar até</label>
+            <input id="minimo" class="entrada" type="number" min="0" formControlName="minimo" [class.invalida]="invalido('controle', 'minimo')" />
+          </div>
+          <div class="linha-botoes">
+            <button class="btn" type="submit" [disabled]="salvando()">Salvar mínimo</button>
+            @if (confirmandoDesligar()) {
+              <button class="btn perigo" type="button" [disabled]="salvando()" (click)="salvarControle(false)">Confirmar: desligar controle</button>
+            } @else {
+              <button class="btn perigo" type="button" (click)="pedirParaDesligar()">Desligar controle</button>
+            }
+          </div>
+          @if (confirmandoDesligar()) {
+            <p class="dica">Sem controle, o produto volta a ser vendido sem limite. O histórico fica guardado.</p>
+          }
+        </form>
+
+        <div class="bloco">
+          <h3>Últimas movimentações</h3>
+          <ul class="historico">
+            @for (m of historico(); track m.id) {
+              <li>
+                <div>
+                  <b>{{ nomesDasMovimentacoes[m.tipo] }}</b>
+                  <small>{{ m.motivo || '—' }} · {{ m.funcionario || 'Sistema' }} · {{ m.criadoEm | date: 'dd/MM HH:mm' }}</small>
+                </div>
+                <div class="valores">
+                  <span [class.entra]="m.variacao > 0" [class.sai]="m.variacao < 0">{{ m.variacao > 0 ? '+' : '' }}{{ m.variacao }}</span>
+                  <small>saldo {{ m.saldoApos }}</small>
+                </div>
+              </li>
+            } @empty {
+              <li class="vazio">Nenhuma movimentação ainda.</li>
+            }
+          </ul>
+        </div>
+      } @else {
+        <form class="bloco" [formGroup]="formControle" (ngSubmit)="salvarControle(true)" novalidate>
+          <h3>Ligar controle de estoque</h3>
+          <p class="dica">Com o controle ligado, cada pedido baixa o saldo e o produto não é vendido acima do que existe.</p>
+          <div class="dois">
+            <div class="campo">
+              <label for="inicial">Quantidade em estoque agora</label>
+              <input id="inicial" class="entrada" type="number" min="0" formControlName="quantidadeInicial" [class.invalida]="invalido('controle', 'quantidadeInicial')" />
+            </div>
+            <div class="campo">
+              <label for="minimo-novo">Estoque mínimo</label>
+              <input id="minimo-novo" class="entrada" type="number" min="0" formControlName="minimo" [class.invalida]="invalido('controle', 'minimo')" />
+            </div>
+          </div>
+          <button class="btn pri grande" type="submit" [disabled]="salvando()">Ligar controle</button>
+        </form>
+      }
+    </aside>
+  }
+</div>

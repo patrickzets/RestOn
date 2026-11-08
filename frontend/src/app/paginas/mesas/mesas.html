@@ -1,0 +1,364 @@
+<div class="titulo">
+  <div>
+    <h1>Mesas</h1>
+  </div>
+  @if (ehGestor()) {
+    <button class="btn pri" type="button" (click)="nova()">
+      <svg class="i"><use href="icones.svg#i-mais" /></svg>
+      Nova mesa
+    </button>
+  }
+</div>
+
+@if (erroDaLista()) {
+  <div class="alerta perigo" role="alert">{{ erroDaLista() }}</div>
+}
+
+<div class="barra-mesas">
+  <form class="ir" (submit)="irParaMesa(); $event.preventDefault()">
+    <label for="ir-numero">Ir para a mesa nº</label>
+    <input id="ir-numero" class="entrada" type="number" inputmode="numeric" min="1" max="999" autocomplete="off"
+      [value]="numeroDigitado()" (input)="numeroDigitado.set($any($event.target).value); erroDoNumero.set('')" />
+    <button class="btn" type="submit">Abrir</button>
+  </form>
+  <div class="filtros" role="group" aria-label="Filtrar mesas">
+    <button type="button" class="filtro" [class.ativo]="filtro() === 'TODAS'" (click)="escolherFiltro('TODAS')">Todas <span>{{ contagem().todas }}</span></button>
+    <button type="button" class="filtro" [class.ativo]="filtro() === 'LIVRE'" (click)="escolherFiltro('LIVRE')">Livres <span>{{ contagem().livres }}</span></button>
+    <button type="button" class="filtro" [class.ativo]="filtro() === 'OCUPADA'" (click)="escolherFiltro('OCUPADA')">Ocupadas <span>{{ contagem().ocupadas }}</span></button>
+    <button type="button" class="filtro" [class.ativo]="filtro() === 'PRONTO'" (click)="escolherFiltro('PRONTO')">Com pedido pronto <span>{{ contagem().prontas }}</span></button>
+    <button type="button" class="filtro" [class.ativo]="filtro() === 'MINHAS'" (click)="escolherFiltro('MINHAS')">Minhas <span>{{ contagem().minhas }}</span></button>
+  </div>
+  @if (setores().length > 1) {
+    <div class="filtros setores" role="group" aria-label="Filtrar por setor">
+      <button type="button" class="filtro" [class.ativo]="setorEscolhido() === 'TODOS'" (click)="escolherSetor('TODOS')">Todos os setores</button>
+      @for (s of setores(); track s) {
+        <button type="button" class="filtro" [class.ativo]="setorEscolhido() === s" (click)="escolherSetor(s)">{{ s }}</button>
+      }
+    </div>
+  }
+</div>
+@if (erroDoNumero()) {
+  <p class="msg-erro erro-numero" role="alert">{{ erroDoNumero() }}</p>
+}
+
+@if (carregando()) {
+  <p class="aviso-vazio">Carregando...</p>
+} @else if (mesas().length === 0) {
+  <p class="aviso-vazio">
+    Nenhuma mesa cadastrada.
+    @if (ehGestor()) { Use "Nova mesa" para começar. } @else { Peça ao gerente para cadastrar as mesas. }
+  </p>
+} @else if (grupos().length === 0) {
+  <p class="aviso-vazio">Nenhuma mesa nesta situação.</p>
+} @else {
+  @for (g of grupos(); track g.nome) {
+    <section class="setor" [attr.aria-label]="'Setor ' + g.nome">
+      <h2 class="setor-t">
+        {{ g.nome }}
+        <span>{{ g.mesas.length }} {{ g.mesas.length === 1 ? 'mesa' : 'mesas' }} · {{ g.ocupadas }} {{ g.ocupadas === 1 ? 'ocupada' : 'ocupadas' }}@if (g.prontas > 0) { · {{ g.prontas }} com pedido pronto }</span>
+      </h2>
+      <div class="grade-mesas" [class.folgada]="g.mesas.length <= 12">
+        @for (m of g.mesas; track m.id) {
+          <button type="button" class="mt"
+            [class.livre]="m.estado === 'LIVRE' && !m.reservaProxima" [class.ocup]="m.estado === 'OCUPADA'"
+            [class.res]="m.estado === 'LIVRE' && m.reservaProxima" [class.aguard]="m.estado === 'AGUARDANDO_LIBERACAO'"
+            [class.pronto]="m.pedidosProntos > 0" [class.desativada]="!m.ativa"
+            [class.minha]="m.estado === 'OCUPADA' && m.abertoPor === auth.usuario()?.id"
+            [attr.aria-label]="'Mesa ' + m.numero + ', ' + (m.ativa ? nomeDoEstado(m) : 'desativada')"
+            (click)="abrirMesa(m)">
+            <b>{{ m.numero }}</b>
+            <small>
+              @if (m.estado === 'LIVRE' && m.reservaProxima; as r) { {{ r.inicio | date: 'HH:mm' }} } @else { {{ legenda(m) }} }
+            </small>
+            @if (m.pedidosProntos > 0) {
+              <span class="n-p" aria-hidden="true">{{ m.pedidosProntos }}</span>
+            }
+          </button>
+        }
+      </div>
+    </section>
+  }
+
+  <div class="legenda" aria-hidden="true">
+    <span><i></i>Livre</span>
+    <span><i class="o"></i>Ocupada, com o tempo</span>
+    <span><i class="r"></i>Reservada, com o horário</span>
+    <span><i class="p"></i>Pedido pronto para levar</span>
+    <span><i class="a"></i>Aguardando limpeza</span>
+    <span><i class="m"></i>Minha mesa</span>
+  </div>
+}
+
+<!-- Janela da mesa: a comanda por cima da lista -->
+@if (selecionada(); as m) {
+  <div class="fundo" (click)="fecharMesa()">
+    <div class="janela" role="dialog" aria-modal="true" [attr.aria-label]="'Mesa ' + m.numero" tabindex="-1" (click)="$event.stopPropagation()" (keydown)="prenderFoco($event)">
+      <header class="j-cab">
+        <div>
+          <h2>Mesa {{ m.numero }}</h2>
+          <p class="sub-mesa">
+            <span>{{ m.setor }}</span> · <span>{{ m.capacidade }} lugares</span> ·
+            @if (!m.ativa) { <span>Desativada</span> }
+            @else if (m.estado === 'OCUPADA') { <span>sentados há {{ tempoDesde(m.atendimentoAbertoEm) }}</span> }
+            @else if (m.estado === 'AGUARDANDO_LIBERACAO') { <span>Aguardando liberação</span> }
+            @else { <span>Livre</span> }
+          </p>
+        </div>
+        <div class="j-cab-acoes">
+          @if (ehGestor()) {
+            <button type="button" class="btn" (click)="editar()">Editar mesa</button>
+          }
+          <button class="fechar" type="button" aria-label="Fechar" (click)="fecharMesa()">
+            <svg class="i"><use href="icones.svg#i-x" /></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="j-corpo">
+        @if (erroDoPainel()) {
+          <div class="alerta perigo sem-margem" role="alert">{{ erroDoPainel() }}</div>
+        }
+
+        @if (m.ativa && m.estado === 'LIVRE') {
+          @if (m.reservaProxima; as r) {
+            <p class="texto">
+              Reserva de <b>{{ r.nomeCliente }}</b> às {{ r.inicio | date: 'HH:mm' }} ({{ r.qtdPessoas }} pessoas). A mesa fica reservada para ela.
+            </p>
+            <button class="btn pri grande" type="button" [disabled]="salvando()" (click)="registrarChegada()">O cliente da reserva chegou</button>
+          } @else {
+            <p class="texto">A mesa está livre. Abra o atendimento quando o cliente se sentar.</p>
+            <button class="btn pri grande" type="button" [disabled]="salvando()" (click)="abrirAtendimento()">Abrir atendimento</button>
+          }
+        }
+
+        @if (m.ativa && m.estado === 'AGUARDANDO_LIBERACAO') {
+          <p class="texto">Os clientes saíram. Quando a mesa estiver limpa e arrumada, confirme para ela voltar a ficar livre.</p>
+          <button class="btn pri grande" type="button" [disabled]="salvando()" (click)="liberar()">Confirmar liberação</button>
+        }
+
+        @if (m.ativa && m.estado === 'OCUPADA') {
+          <!-- Comandas da mesa: abas, e o "+ Nova comanda" fica separado, em tracejado -->
+          <div class="abas-topo">
+          <div class="abas" role="tablist" aria-label="Comandas da mesa">
+            @for (c of comandasDaMesa(); track c.id) {
+              <button type="button" role="tab" class="aba" [class.ativa]="comandaEscolhidaId() === c.id" [attr.aria-selected]="comandaEscolhidaId() === c.id"
+                [class.encerrada]="c.status !== 'ABERTA'" (click)="escolherComanda(c.id)">
+                {{ rotulo(c) }}
+                @if (c.status !== 'ABERTA') { <small>{{ c.status === 'FECHADA' ? 'fechada' : 'cancelada' }}</small> }
+              </button>
+            }
+          </div>
+          @if (podeOperar()) {
+            <button type="button" class="aba nova" (click)="pedirConfirmacao('nova-comanda')">+ Nova comanda</button>
+          }
+          </div>
+
+          @if (confirmacao() === 'nova-comanda') {
+            <div class="confirma" role="alertdialog" aria-label="Abrir nova comanda">
+              <b>Abrir a Comanda {{ comandasDaMesa().length + 1 }}?</b>
+              <p>Cria mais uma comanda na mesa {{ m.numero }}. Use quando alguém quiser pagar separado.</p>
+              <div class="dupla">
+                <button class="btn" type="button" (click)="confirmacao.set(null)">Voltar</button>
+                <button class="btn pri" type="button" [disabled]="salvando()" (click)="novaComanda()">Abrir comanda</button>
+              </div>
+            </div>
+          }
+
+          @if (comandaAtual(); as c) {
+            @if (pedidosParaLevar().length > 0) {
+              <div class="grupo-ped para-levar">
+                <h3>Pronto, levar à mesa</h3>
+                @for (p of pedidosParaLevar(); track p.id) {
+                  <div class="ped">
+                    <ul>
+                      @for (i of p.itens; track i.id) {
+                        <li [class.cancelado]="i.cancelado">
+                          <span>{{ i.quantidade }}× {{ i.produtoNome }}</span><span class="num">{{ preco(i.subtotal) }}</span>
+                          @if (i.observacao) { <em class="obs">Obs.: {{ i.observacao }}</em> }
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                }
+              </div>
+            }
+
+            @if (pedidosEmPreparo().length > 0) {
+              <div class="grupo-ped">
+                <h3>Na cozinha e no bar</h3>
+                @for (p of pedidosEmPreparo(); track p.id) {
+                  <div class="ped">
+                    <ul>
+                      @for (i of p.itens; track i.id) {
+                        <li [class.cancelado]="i.cancelado">
+                          <span>{{ i.quantidade }}× {{ i.produtoNome }}</span><span class="num">{{ preco(i.subtotal) }}</span>
+                          @if (i.observacao) { <em class="obs">Obs.: {{ i.observacao }}</em> }
+                        </li>
+                      }
+                    </ul>
+                    @if (podeCancelarPedido(p) && pedidoCancelando() !== p.id) {
+                      <button type="button" class="link" (click)="comecarACancelarPedido(p)">Cancelar pedido</button>
+                    }
+                    @if (pedidoCancelando() === p.id) {
+                      <div class="confirma" role="group" aria-label="Cancelar pedido">
+                        <p>Cancela todos os itens deste pedido. Diga o motivo.</p>
+                        <input class="entrada" type="text" maxlength="120" placeholder="Motivo (obrigatório)" aria-label="Motivo do cancelamento"
+                          [value]="motivo()" (input)="motivo.set($any($event.target).value)" (keydown.enter)="confirmarCancelamentoDoPedido(p)" />
+                        <div class="dupla">
+                          <button class="btn" type="button" (click)="pedidoCancelando.set(null)">Voltar</button>
+                          <button class="btn perigo" type="button" [disabled]="salvando()" (click)="confirmarCancelamentoDoPedido(p)">Cancelar pedido</button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+            @if (c.pedidos?.length === 0) {
+              <p class="texto vazio-comanda">Nenhum pedido nesta comanda ainda.</p>
+            }
+
+            @if (pedidosAnteriores().length > 0) {
+              <details class="anteriores">
+                <summary>Já servidos e cancelados ({{ pedidosAnteriores().length }})</summary>
+                @for (p of pedidosAnteriores(); track p.id) {
+                  <ul>
+                    @for (i of p.itens; track i.id) {
+                      <li [class.cancelado]="i.cancelado || p.status === 'CANCELADO'"><span>{{ i.quantidade }}× {{ i.produtoNome }}</span><span class="num">{{ preco(i.subtotal) }}</span></li>
+                    }
+                  </ul>
+                }
+              </details>
+            }
+
+            <div class="totais">
+              <div><span>Subtotal</span><span class="num">{{ preco(c.subtotal) }}</span></div>
+              <div><span>Serviço ({{ c.taxaPercentual }}%)</span><span class="num">{{ c.taxaRemovida ? 'Removida' : preco(c.taxaValor) }}</span></div>
+              <div class="total"><span>Total</span><span class="num">{{ preco(c.total) }}</span></div>
+            </div>
+
+            @if (confirmacao() === 'cancelar-comanda') {
+              <div class="confirma" role="alertdialog" aria-label="Cancelar comanda">
+                <b>Cancelar a {{ rotulo(c) }}?</b>
+                <p>Ela não tem nenhum item. Depois de cancelada, não dá para voltar.</p>
+                <div class="dupla">
+                  <button class="btn" type="button" (click)="confirmacao.set(null)">Voltar</button>
+                  <button class="btn perigo" type="button" [disabled]="salvando()" (click)="cancelarComanda()">Cancelar comanda</button>
+                </div>
+              </div>
+            }
+          }
+        }
+      </div>
+
+      @if (m.ativa && m.estado === 'OCUPADA') {
+        <footer class="j-rodape">
+          @if (comandaAtual(); as c) {
+            @if (c.status === 'ABERTA' && podeOperar()) {
+              <a class="btn pri grande" [routerLink]="['/comandas', c.id, 'pedido']">Lançar pedido</a>
+            }
+            @if (c.status !== 'CANCELADA') {
+              <a class="btn grande" [routerLink]="['/comandas', c.id, 'comprovante']">Ver a conta</a>
+            }
+          }
+
+          <button type="button" class="link mais" [attr.aria-expanded]="maisAcoes()" (click)="maisAcoes.set(!maisAcoes())">
+            {{ maisAcoes() ? 'Menos opções' : 'Mais opções da mesa' }}
+          </button>
+
+          @if (maisAcoes()) {
+            <div class="mais-acoes">
+              @if (comandaAtual(); as c) {
+                @if (c.status === 'ABERTA' && podeOperar() && semItensAtivos(c) && confirmacao() !== 'cancelar-comanda') {
+                  <button type="button" class="btn perigo" (click)="pedirConfirmacao('cancelar-comanda')">Cancelar {{ rotulo(c) }}</button>
+                }
+              }
+
+              @if (confirmacao() === 'encerrar') {
+                <div class="confirma" role="alertdialog" aria-label="Encerrar atendimento">
+                  <b>Encerrar o atendimento da mesa {{ m.numero }}?</b>
+                  <p>Todos os clientes saíram. A mesa vai para "aguardando liberação".</p>
+                  <div class="dupla">
+                    <button class="btn" type="button" (click)="confirmacao.set(null)">Voltar</button>
+                    <button class="btn perigo" type="button" [disabled]="salvando()" (click)="encerrarAtendimento()">Encerrar atendimento</button>
+                  </div>
+                </div>
+              } @else {
+                <div class="campo">
+                  <label for="destino">Levar para outra mesa</label>
+                  <div class="troca">
+                    <select id="destino" class="entrada" [ngModel]="destinoDaTroca()" (ngModelChange)="destinoDaTroca.set($event)">
+                      <option [ngValue]="null">Escolha a mesa</option>
+                      @for (d of mesasParaTrocar(); track d.id) {
+                        <option [ngValue]="d.id">Mesa {{ d.numero }} ({{ d.capacidade }} lugares)</option>
+                      }
+                    </select>
+                    <button class="btn" type="button" [disabled]="salvando() || !destinoDaTroca()" (click)="trocarMesa()">Trocar</button>
+                  </div>
+                  @if (mesasParaTrocar().length === 0) {
+                    <span class="dica-campo">Não há mesa livre para onde levar.</span>
+                  }
+                </div>
+                <button type="button" class="btn perigo" (click)="pedirConfirmacao('encerrar')">Encerrar atendimento</button>
+              }
+            </div>
+          }
+        </footer>
+      }
+    </div>
+  </div>
+}
+
+<!-- Cadastro da mesa (gerente) -->
+@if (formulario() !== 'fechado') {
+  <div class="fundo" (click)="fecharFormulario()">
+    <form class="janela estreita" role="dialog" aria-modal="true" aria-label="Dados da mesa" tabindex="-1"
+      [formGroup]="form" (ngSubmit)="salvarMesa()" (click)="$event.stopPropagation()" (keydown)="prenderFoco($event)" novalidate>
+      <header class="j-cab">
+        <div>
+          <h2>{{ formulario() === 'nova' ? 'Nova mesa' : 'Editar mesa' }}</h2>
+          <p>Número, lugares e o setor onde ela fica.</p>
+        </div>
+        <button class="fechar" type="button" aria-label="Fechar" (click)="fecharFormulario()">
+          <svg class="i"><use href="icones.svg#i-x" /></svg>
+        </button>
+      </header>
+      <div class="j-corpo">
+        @if (erroDoPainel()) {
+          <div class="alerta perigo sem-margem" role="alert">{{ erroDoPainel() }}</div>
+        }
+        <div class="dois">
+          <div class="campo">
+            <label for="numero">Número</label>
+            <input id="numero" class="entrada" type="number" min="1" max="999" formControlName="numero" [class.invalida]="invalido('numero')" />
+            @if (invalido('numero')) { <span class="msg-erro">De 1 a 999.</span> }
+          </div>
+          <div class="campo">
+            <label for="capacidade">Lugares</label>
+            <input id="capacidade" class="entrada" type="number" min="1" max="30" formControlName="capacidade" [class.invalida]="invalido('capacidade')" />
+            @if (invalido('capacidade')) { <span class="msg-erro">De 1 a 30.</span> }
+          </div>
+        </div>
+        <div class="campo">
+          <label for="setor">Setor</label>
+          <input id="setor" class="entrada" type="text" maxlength="30" list="lista-setores" formControlName="setor" [class.invalida]="invalido('setor')" />
+          <datalist id="lista-setores">
+            @for (s of setores(); track s) { <option [value]="s"></option> }
+          </datalist>
+          <span class="dica-campo">Por exemplo: Salão, Varanda ou Balcão. As mesas do mesmo setor ficam juntas na tela.</span>
+          @if (invalido('setor')) { <span class="msg-erro">Informe o setor.</span> }
+        </div>
+        @if (formulario() === 'editar') {
+          <label class="marcar">
+            <input type="checkbox" formControlName="ativa" />
+            Mesa ativa (desmarque para tirar a mesa de uso)
+          </label>
+        }
+      </div>
+      <footer class="j-rodape">
+        <button class="btn pri grande" type="submit" [disabled]="salvando()">{{ formulario() === 'nova' ? 'Cadastrar mesa' : 'Salvar dados' }}</button>
+      </footer>
+    </form>
+  </div>
+}

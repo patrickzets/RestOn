@@ -1,0 +1,66 @@
+@if (erro()) {
+  <div class="alerta perigo" role="alert">{{ erro() }}</div>
+  <button type="button" class="btn" (click)="voltar()">Voltar</button>
+} @else if (dados(); as c) {
+  <div class="acoes sem-impressao">
+    <button type="button" class="btn" (click)="voltar()">Voltar</button>
+    <button type="button" class="btn pri" (click)="imprimir()">Imprimir</button>
+  </div>
+
+  <article class="recibo" aria-label="Comprovante da comanda">
+    <header>
+      <h1>RestON</h1>
+      <p class="tipo">{{ c.status === 'FECHADA' ? 'Comprovante de pagamento' : 'Conta parcial (a comanda ainda está aberta)' }}</p>
+    </header>
+
+    <dl class="dados">
+      <div><dt>Comanda</dt><dd>{{ c.codigo }}</dd></div>
+      <div><dt>Mesa</dt><dd>{{ c.mesaNumero }}</dd></div>
+      <div><dt>Comanda nº</dt><dd>{{ c.numeroCliente }}</dd></div>
+      <div><dt>Aberta em</dt><dd>{{ c.abertaEm | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+      @if (c.fechadaEm) {
+        <div><dt>Fechada em</dt><dd>{{ c.fechadaEm | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+      }
+    </dl>
+
+    <table class="itens">
+      <thead>
+        <tr><th>Item</th><th class="direita">Qtd</th><th class="direita">Preço</th><th class="direita">Total</th></tr>
+      </thead>
+      <tbody>
+        @for (i of c.itens; track $index) {
+          <tr>
+            <td>{{ i.produto }}@if (i.observacao) { <small>{{ i.observacao }}</small> }</td>
+            <td class="direita">{{ i.quantidade }}</td>
+            <td class="direita">{{ reais(i.precoUnitario) }}</td>
+            <td class="direita">{{ reais(i.subtotal) }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="totais">
+      <div><span>Subtotal</span><span>{{ reais(c.subtotal) }}</span></div>
+      <div><span>Taxa de serviço ({{ c.taxaPercentual }}%)</span><span>{{ c.taxaRemovida ? 'Removida' : reais(c.taxaValor) }}</span></div>
+      <div class="total"><span>Total</span><span>{{ reais(c.total) }}</span></div>
+    </div>
+
+    <h2>Pagamentos</h2>
+    <div class="totais">
+      @for (p of c.pagamentos; track p.id) {
+        <div>
+          <span>{{ nomesDosMetodos[p.metodo] }}{{ p.origem === 'RESERVA' ? ' (antecipado)' : '' }}</span>
+          <span>{{ reais(p.valor) }}</span>
+        </div>
+      } @empty {
+        <div><span>Nenhum pagamento registrado</span><span></span></div>
+      }
+      <div class="total"><span>Pago</span><span>{{ reais(c.pago) }}</span></div>
+      @if (c.troco > 0) {
+        <div><span>Troco devolvido</span><span>{{ reais(c.troco) }}</span></div>
+      }
+    </div>
+
+    <p class="rodape">Comprovante simulado, sem valor fiscal. Obrigado pela visita!</p>
+  </article>
+}

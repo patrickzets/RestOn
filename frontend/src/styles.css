@@ -1,0 +1,190 @@
+/* Estilos globais do RestON. */
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist-mono';
+
+:root {
+  /* Superfícies e linhas */
+  --bg: #FFFFFF;
+  --bg-sutil: #FAFAF9;
+  --lateral: #F7F7F5;
+  --linha: #E7E5E1;
+  --linha-forte: #D6D3CD;
+
+  /* Texto */
+  --ink: #171512;
+  --ink-2: #55524C;
+  --ink-3: #6E6A62;
+
+  /* Marca (tomate) */
+  --acc: #D13F1A;
+  --acc-ink: #A82E10;
+  --acc-soft: #FDEEE9;
+
+  /* Estados */
+  --ok: #0F7B55;       --ok-bg: #E6F5EE;
+  --aviso: #9A6200;    --aviso-bg: #FFF3D6;
+  --info: #1F5FBF;     --info-bg: #E8F0FD;
+  --perigo: #C0262D;   --perigo-bg: #FDE9EA;
+  --neutro: #55524C;   --neutro-bg: #F0EFEC;
+
+  --fonte: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'Geist Mono Variable', ui-monospace, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--fonte);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { margin: 0; letter-spacing: -0.02em; }
+
+:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; border-radius: 6px; }
+
+/* Ícones do arquivo public/icones.svg */
+svg.i {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+
+/* Botões */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--linha-forte);
+  background: var(--bg);
+  color: var(--ink);
+  font: 500 13px var(--fonte);
+  cursor: pointer;
+}
+.btn:hover { background: var(--bg-sutil); }
+.btn.pri { background: var(--acc); border-color: var(--acc); color: #fff; }
+.btn.pri:hover { filter: brightness(0.94); }
+
+/* Painel (bloco com borda) */
+.painel {
+  border: 1px solid var(--linha);
+  border-radius: 12px;
+  background: var(--bg);
+}
+
+/* Selo de status: texto colorido; só os que pedem atenção ganham fundo */
+.selo {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--neutro);
+}
+.selo.ok { color: var(--ok); }
+.selo.info { color: var(--info); }
+.selo.aviso, .selo.perigo { padding: 2px 8px; border-radius: 6px; }
+.selo.aviso { background: var(--aviso-bg); color: #7A4C00; }
+.selo.perigo { background: var(--perigo-bg); color: var(--perigo); }
+
+/* ===== Formulários ===== */
+.campo { display: grid; gap: 6px; margin-bottom: 14px; }
+.campo label { font-size: 13px; font-weight: 500; color: var(--ink-2); }
+.campo .dica-campo { font-size: 12.5px; color: var(--ink-3); }
+
+.entrada {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--linha-forte);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+}
+.entrada:focus { outline: none; border-color: var(--acc); box-shadow: 0 0 0 3px var(--acc-soft); }
+.entrada.invalida { border-color: var(--perigo); }
+select.entrada { padding-right: 8px; }
+
+.msg-erro { font-size: 12.5px; color: var(--perigo); }
+
+.alerta { padding: 10px 12px; border-radius: 8px; font-size: 13.5px; margin-bottom: 14px; }
+.alerta.perigo { background: var(--perigo-bg); color: var(--perigo); }
+.alerta.ok { background: var(--ok-bg); color: var(--ok); }
+.alerta.aviso { background: var(--aviso-bg); color: var(--aviso); }
+
+.btn.grande { min-height: 44px; width: 100%; justify-content: center; font-size: 14.5px; }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn.perigo { color: var(--perigo); border-color: var(--perigo-bg); }
+.btn.perigo:hover { background: var(--perigo-bg); }
+
+/* ===== Tabelas ===== */
+table.tabela { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.tabela th { text-align: left; font-weight: 500; color: var(--ink-3); font-size: 12.5px; padding: 8px 12px; border-bottom: 1px solid var(--linha); background: var(--bg-sutil); white-space: nowrap; }
+.tabela td { padding: 0 12px; height: 50px; border-bottom: 1px solid var(--linha); white-space: nowrap; }
+.tabela tr:last-child td { border-bottom: 0; }
+.tabela tr.clicavel { cursor: pointer; }
+.tabela tr.clicavel:hover td { background: var(--bg-sutil); }
+.tabela tr.escolhida td { background: var(--acc-soft); }
+
+.avatar { width: 28px; height: 28px; border-radius: 8px; background: var(--bg-sutil); border: 1px solid var(--linha-forte); color: var(--ink-2); display: inline-grid; place-items: center; font-size: 11px; font-weight: 600; flex: none; }
+
+/* Pequenos pedaços de formulário usados em várias telas */
+.dois { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.troca { display: flex; gap: 8px; }
+.troca .entrada { flex: 1; min-width: 0; }
+.texto { margin: 0 0 12px; font-size: 13.5px; color: var(--ink-2); }
+.marcar { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink-2); }
+.sem-margem { margin: 0; }
+
+/* Cabeçalho de página, lista com gaveta lateral e blocos (usados por Equipe, Mesas e Reservas) */
+.titulo { display: flex; align-items: flex-end; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+.titulo h1 { font-size: 22px; font-weight: 600; line-height: 1.2; }
+.titulo p { margin: 4px 0 0; color: var(--ink-3); }
+.titulo .btn { margin-left: auto; }
+
+.lista-gaveta { display: grid; grid-template-columns: minmax(0, 1fr); border: 1px solid var(--linha); border-radius: 12px; overflow: hidden; background: var(--bg); }
+.lista-gaveta.com-gaveta { grid-template-columns: minmax(0, 1fr) 372px; }
+.tab { min-width: 0; overflow-x: auto; }
+
+.num { font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.aviso-vazio { padding: 24px; text-align: center; color: var(--ink-3); margin: 0; }
+
+.gaveta { border-left: 1px solid var(--linha); background: var(--bg); display: flex; flex-direction: column; }
+.cab { padding: 14px 18px 12px; border-bottom: 1px solid var(--linha); display: flex; align-items: flex-start; gap: 10px; }
+.cab h2 { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
+.cab p { margin: 3px 0 0; color: var(--ink-3); font-size: 13px; }
+.fechar { margin-left: auto; width: 28px; height: 28px; border: 0; border-radius: 7px; background: transparent; color: var(--ink-2); display: grid; place-items: center; cursor: pointer; }
+.fechar:hover { background: var(--neutro-bg); }
+.gaveta:focus { outline: none; }
+
+.bloco { padding: 16px 18px; border-bottom: 1px solid var(--linha); }
+.bloco:last-child { border-bottom: 0; }
+.bloco h3 { font-size: 12.5px; font-weight: 500; color: var(--ink-3); margin-bottom: 10px; }
+
+.linha-botoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.confirmacao p { margin: 0 0 12px; font-size: 13.5px; }
+
+@media (max-width: 1000px) {
+  .lista-gaveta.com-gaveta { grid-template-columns: minmax(0, 1fr); }
+  /* Tablet e celular: o detalhe cobre a tela, acima da barra de atalhos, com o cabeçalho colado no topo */
+  .gaveta { position: fixed; inset: 0; z-index: 60; overflow-y: auto; border: 0; }
+  .gaveta > * { flex-shrink: 0; }
+  .gaveta .cab { position: sticky; top: 0; z-index: 1; background: var(--bg); align-items: center; }
+  .gaveta > :last-child { padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)); }
+  .fechar { width: 44px; height: 44px; }
+  .gaveta .btn { min-height: 44px; }
+  .gaveta .entrada { min-height: 44px; }
+}

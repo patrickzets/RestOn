@@ -1,0 +1,136 @@
+:host { display: block; }
+
+.app {
+  display: grid;
+  grid-template-columns: 244px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+/* Barra lateral */
+.lateral {
+  background: var(--lateral);
+  border-right: 1px solid var(--linha);
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.espaco {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 8px 14px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.marca {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: var(--acc);
+  display: grid;
+  place-items: center;
+}
+.marca b { display: block; width: 14px; height: 8px; border-radius: 99px; background: #fff; position: relative; }
+.marca b::after { content: ''; position: absolute; right: 1px; top: 1px; width: 6px; height: 6px; border-radius: 50%; background: var(--acc); }
+
+.secao {
+  margin: 12px 0 2px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.secao i { width: 7px; height: 7px; border-radius: 50%; display: block; }
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  color: var(--ink-2);
+  font-weight: 500;
+  text-decoration: none;
+}
+.nav:hover { background: var(--neutro-bg); color: var(--ink); }
+.nav.atual { background: var(--bg); color: var(--ink); box-shadow: 0 0 0 1px var(--linha), 0 1px 2px rgba(23, 21, 18, 0.05); }
+
+.rodape-lat { margin-top: auto; padding: 12px 8px 0; border-top: 1px solid var(--linha); font-size: 12px; color: var(--ink-3); }
+.usuario { display: flex; align-items: center; gap: 9px; color: var(--ink); }
+.usuario b { display: block; font-size: 13.5px; font-weight: 600; line-height: 1.2; }
+.usuario small { color: var(--ink-3); font-size: 12px; }
+.acoes-usuario { display: flex; gap: 4px; margin: 8px 0 0 -6px; }
+.link { border: 0; background: transparent; color: var(--ink-2); font: 500 12.5px var(--fonte); cursor: pointer; padding: 5px 8px; border-radius: 6px; }
+.link:hover { background: var(--neutro-bg); color: var(--ink); }
+
+/* Parte principal */
+.principal { min-width: 0; display: flex; flex-direction: column; }
+
+.barra {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  min-height: 52px;
+  border-bottom: 1px solid var(--linha);
+}
+
+.migalha { display: flex; align-items: center; gap: 8px; color: var(--ink-3); font-weight: 500; }
+.migalha b { color: var(--ink); font-weight: 600; }
+.seta { width: 12px; height: 12px; transform: rotate(-90deg); }
+
+.dir { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+.vivo { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 500; color: var(--ink-2); }
+.vivo i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px var(--ok-bg); display: block; }
+.vivo.fora i { background: var(--perigo); box-shadow: 0 0 0 3px var(--perigo-bg); }
+
+.icb {
+  display: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--linha-forte);
+  background: var(--bg);
+  color: var(--ink);
+  place-items: center;
+  cursor: pointer;
+}
+
+.corpo { padding: 22px 24px 28px; min-width: 0; }
+
+/* Telas estreitas: o menu vira uma gaveta */
+@media (max-width: 1000px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .lateral { position: fixed; z-index: 10; width: 244px; transform: translateX(-100%); transition: transform 0.15s ease; }
+  .app.menu-aberto .lateral { transform: translateX(0); box-shadow: 0 0 0 100vmax rgba(23, 21, 18, 0.35); }
+  .icb { display: grid; }
+}
+
+/* Atalhos do garçom: só aparecem em tela estreita */
+.atalhos { display: none; }
+
+@media (max-width: 1000px) {
+  .corpo.com-atalhos { padding-bottom: 84px; }
+  .atalhos { position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; display: grid; grid-template-columns: repeat(3, 1fr); background: var(--bg); border-top: 1px solid var(--linha); }
+  .atalhos a { min-height: 60px; display: grid; place-items: center; align-content: center; gap: 2px; color: var(--ink-3); text-decoration: none; font-size: 12px; }
+  .atalhos a.atual { color: var(--acc); font-weight: 600; }
+}
+
+/* Ao imprimir (comprovante), some o menu e a barra de cima */
+@media print {
+  .lateral, .barra, .atalhos { display: none !important; }
+  .app { display: block; }
+  .corpo { padding: 0; }
+}
+

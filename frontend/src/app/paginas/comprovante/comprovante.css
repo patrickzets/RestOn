@@ -1,0 +1,30 @@
+.acoes { display: flex; gap: 8px; margin-bottom: 16px; }
+
+.recibo { max-width: 420px; margin: 0 auto; padding: 24px; background: var(--bg); border: 1px solid var(--linha); border-radius: 12px; font-size: 14px; }
+.recibo header { text-align: center; margin-bottom: 16px; }
+.recibo h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.recibo h2 { font-size: 13px; font-weight: 600; margin: 16px 0 8px; color: var(--ink-2); }
+.tipo { margin: 4px 0 0; color: var(--ink-3); font-size: 13px; }
+
+.dados { margin: 0 0 14px; padding: 12px 0; border-top: 1px dashed var(--linha-forte, #cfcac1); border-bottom: 1px dashed var(--linha-forte, #cfcac1); display: grid; gap: 4px; }
+.dados div { display: flex; justify-content: space-between; gap: 10px; }
+.dados dt { color: var(--ink-3); }
+.dados dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+.itens { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+.itens th { text-align: left; font-weight: 500; color: var(--ink-3); font-size: 12px; padding: 4px 0; border-bottom: 1px solid var(--linha); }
+.itens th:not(:first-child), .itens td:not(:first-child) { padding-left: 12px; white-space: nowrap; }
+.itens td { padding: 6px 0; vertical-align: top; font-variant-numeric: tabular-nums; }
+.itens small { display: block; color: var(--ink-3); font-size: 12px; }
+.direita { text-align: right; }
+
+.totais { display: grid; gap: 4px; }
+.totais > div { display: flex; justify-content: space-between; gap: 10px; font-variant-numeric: tabular-nums; }
+.totais .total { font-weight: 700; font-size: 16px; padding-top: 6px; margin-top: 2px; border-top: 1px solid var(--linha); }
+
+.rodape { margin: 20px 0 0; text-align: center; color: var(--ink-3); font-size: 12.5px; }
+
+@media print {
+  .sem-impressao { display: none; }
+  .recibo { border: 0; padding: 0; max-width: none; }
+}

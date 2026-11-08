@@ -1,0 +1,90 @@
+<section class="cozinha">
+  <header class="topo">
+    <div>
+      <h1>{{ modoBar() ? 'Bar' : 'Cozinha' }}</h1>
+      <p>Os pedidos mais antigos vêm primeiro. Toque em Pronto quando o pedido sair do balcão.</p>
+    </div>
+    <div class="filtros" role="group" aria-label="Mostrar pedidos de">
+      @if (!modoBar()) {
+        @for (f of filtros; track f) {
+          <button type="button" class="filtro" [class.ativo]="filtro() === f" (click)="escolherFiltro(f)">
+            {{ destinoDoFiltro(f) }} <span>{{ quantos(f) }}</span>
+          </button>
+        }
+      }
+      <button type="button" class="filtro som" [class.ativo]="som()" [attr.aria-pressed]="som()" (click)="alternarSom()">
+        {{ som() ? 'Som ligado' : 'Som desligado' }}
+      </button>
+    </div>
+  </header>
+
+  @if (erro()) {
+    <div class="aviso-erro" role="alert">{{ erro() }}</div>
+  }
+
+  @if (carregando()) {
+    <p class="vazio">Carregando...</p>
+  } @else {
+    <h2 class="secao">Na fila <span class="contador">{{ fila().length }}</span></h2>
+
+    @if (fila().length === 0) {
+      <p class="vazio-fila">Nenhum pedido na fila. Quando chegar um, o aviso toca aqui.</p>
+    } @else {
+      <div class="fila">
+        @for (p of fila(); track p.id) {
+          <article class="ticket" [class.atencao]="urgencia(p) === 'atencao'" [class.atrasado]="urgencia(p) === 'atrasado'" [class.novo]="ehNovo(p)">
+            <header class="faixa">
+              <div class="quem">
+                <b class="mesa">Mesa {{ p.mesaNumero }}</b>
+                @if (!modoBar() && filtro() === 'TODOS') {
+                  <span class="cliente">{{ nomesDosDestinos[p.destino] }}</span>
+                }
+              </div>
+              <div class="relogio">
+                <b>{{ tempo(minutos(p)) }}</b>
+                @if (urgencia(p) === 'atrasado') {
+                  <span class="texto-atraso">atrasado há {{ tempo(minutosDeAtraso(p)) }}</span>
+                } @else if (p.tempoPrevistoMin > 0) {
+                  <span>previsto {{ p.tempoPrevistoMin }} min</span>
+                }
+              </div>
+            </header>
+
+            <ul class="itens">
+              @for (item of p.itens; track item.id) {
+                <li [class.cancelado]="item.cancelado">
+                  <span class="qtd">{{ item.quantidade }}×</span>
+                  <span>
+                    {{ item.produtoNome }}
+                    @if (item.observacao) {
+                      <em class="obs">Obs.: {{ item.observacao }}</em>
+                    }
+                    @if (item.cancelado) {
+                      <em class="obs">cancelado, não fazer</em>
+                    }
+                  </span>
+                </li>
+              }
+            </ul>
+
+            <button type="button" class="acao" [disabled]="trabalhando() === p.id" (click)="marcarPronto(p)">Pronto</button>
+          </article>
+        }
+      </div>
+    }
+
+    <h2 class="secao">Prontos, esperando o garçom <span class="contador">{{ prontos().length }}</span></h2>
+    @if (prontos().length === 0) {
+      <p class="vazio-fila">Nada esperando retirada.</p>
+    } @else {
+      <ul class="prontos">
+        @for (p of prontos(); track p.id) {
+          <li>
+            <b>Mesa {{ p.mesaNumero }}</b>
+            <span>{{ p.itens.length }} {{ p.itens.length === 1 ? 'item' : 'itens' }}</span>
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>

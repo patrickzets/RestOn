@@ -1,0 +1,121 @@
+/* Barra do caixa */
+.barra { padding: 14px 18px; margin-bottom: 18px; display: grid; gap: 12px; border: 1px solid var(--linha); border-radius: 12px; background: var(--bg); }
+.barra-linha { display: flex; align-items: center; gap: 12px 28px; flex-wrap: wrap; }
+.situacao { display: flex; align-items: center; gap: 10px; margin-right: auto; }
+.situacao b { display: block; font-size: 15px; font-weight: 600; }
+.situacao small { color: var(--ink-3); font-size: 12.5px; }
+.ponto { width: 10px; height: 10px; border-radius: 50%; background: var(--ok); flex: none; }
+.ponto.fechado { background: var(--ink-3); }
+.barra-numero { display: grid; gap: 1px; }
+.barra-numero span { color: var(--ink-3); font-size: 12.5px; }
+.barra-numero b { font-size: 18px; font-weight: 600; color: var(--ink); }
+.barra-numero.principal b { font-size: 26px; font-weight: 700; color: var(--ok); }
+.fechar-turno { border-color: var(--ink); font-weight: 600; }
+
+.abertura, .fechamento { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.abertura .campo, .fechamento .campo { margin: 0; min-width: 240px; }
+.fechamento { padding: 12px; background: var(--bg-sutil); border-radius: 10px; }
+.detalhe-turno { width: 100%; margin: 0; color: var(--ink-3); font-size: 12.5px; }
+.resumo-fechamento { padding: 12px 14px; border-radius: 10px; background: var(--bg-sutil); font-size: 14px; line-height: 1.8; }
+
+/* Filtros */
+.ferramentas { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.filtros { display: flex; gap: 0; border-bottom: 1px solid var(--linha); }
+.filtro { min-height: 40px; padding: 0 4px; margin-right: 14px; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; border-radius: 0; background: transparent; color: var(--ink-3); font: inherit; font-size: 14px; cursor: pointer; }
+.filtro:hover { color: var(--ink); background: transparent; }
+.filtro.ativo { border-bottom-color: var(--acc); color: var(--ink); font-weight: 600; }
+.busca { flex: 1; max-width: 340px; min-width: 200px; height: 36px; }
+
+/* Cartões por mesa: empilham sozinhos em tela estreita */
+.cartoes { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.cartao { display: grid; gap: 6px; align-content: start; text-align: left; padding: 14px 16px; border: 1px solid var(--linha); border-radius: 12px; background: var(--bg); color: var(--ink); font: inherit; cursor: pointer; min-height: 150px; overflow: hidden; grid-template-rows: auto auto 1fr; }
+.cartao.com-pendencia { padding-top: 0; }
+.cartao:hover { border-color: var(--linha-forte); background: var(--bg-sutil); }
+.cartao-topo { display: grid; gap: 2px; }
+.cartao-topo b { font-size: 16px; font-weight: 600; }
+.cartao-comanda { color: var(--ink-3); font-size: 13px; }
+.falta-rotulo { color: var(--ink-3); font-size: 12.5px; margin-top: 4px; }
+.falta-valor { font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.cartao .selo { width: fit-content; margin-top: 4px; }
+/* Faixa no topo: mostra de cara que esta comanda ainda não pode fechar */
+.cartao-aviso { margin: 0 -16px 12px; padding: 7px 16px; background: var(--aviso-bg); color: #7A4C00; font-size: 12.5px; font-weight: 600; }
+.vazio { grid-column: 1 / -1; }
+
+/* Janela de cobrança */
+.fundo { position: fixed; inset: 0; z-index: 50; background: rgba(23, 21, 18, 0.5); display: flex; align-items: center; justify-content: center; padding: 16px; overflow-y: auto; }
+.janela { width: 100%; max-width: 520px; max-height: calc(100vh - 32px); overflow-y: auto; background: var(--bg); border-radius: 14px; padding: 18px 20px 22px; display: grid; gap: 16px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25); }
+.janela:focus { outline: none; }
+.janela-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.janela-cab h2 { font-size: 18px; font-weight: 600; }
+.janela-cab p { margin: 2px 0 0; color: var(--ink-3); font-size: 13px; }
+.fechar { width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--ink-2); cursor: pointer; flex: none; }
+.fechar:hover { background: var(--bg-sutil); }
+
+.passos { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; }
+.passos li { flex: 1; display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-3); padding: 6px 8px; border-radius: 8px; background: var(--bg-sutil); }
+.passos li span { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11.5px; border: 1px solid var(--linha-forte); flex: none; }
+.passos li.feito { color: var(--ok); }
+.passos li.feito span { background: var(--ok); border-color: var(--ok); color: #fff; }
+.passos li.atual { background: var(--acc-soft); color: var(--acc-ink); font-weight: 600; }
+.passos li.atual span { background: var(--acc); border-color: var(--acc); color: #fff; }
+
+.secao { display: grid; gap: 8px; }
+.secao h3 { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.item { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
+.totais { display: grid; gap: 4px; font-size: 13.5px; color: var(--ink-2); margin-top: 6px; }
+.totais > div { display: flex; justify-content: space-between; }
+.totais .total { color: var(--ink); font-weight: 600; font-size: 16px; padding-top: 6px; border-top: 1px solid var(--linha); }
+.falta-grande { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 14px; border-radius: 10px; background: var(--bg-sutil); }
+.falta-grande span { font-size: 14px; color: var(--ink-2); }
+.falta-grande b { font-size: 28px; font-weight: 650; font-variant-numeric: tabular-nums; }
+
+.pagamento-linha { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13.5px; }
+.pagamento-linha > span:first-child { margin-right: auto; }
+.pagamento-linha small { display: block; color: var(--ink-3); font-size: 12px; }
+.pagamento-linha.estornado { color: var(--ink-3); }
+.pagamento-linha.estornado .num { text-decoration: line-through; }
+
+/* Métodos de pagamento: três botões grandes */
+.metodos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.metodo { min-height: 56px; border: 1px solid var(--linha-forte); border-radius: 10px; background: var(--bg); color: var(--ink); font: inherit; font-size: 15px; font-weight: 500; cursor: pointer; }
+.metodo:hover { background: var(--bg-sutil); }
+.metodo.ativo { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+
+.rotulo { font-size: 13px; font-weight: 500; color: var(--ink-2); }
+.rapidos { display: flex; flex-wrap: wrap; gap: 8px; }
+.rapido { min-height: 44px; padding: 0 14px; border: 1px solid var(--linha-forte); border-radius: 10px; background: var(--bg); color: var(--ink); font: inherit; font-size: 14px; font-variant-numeric: tabular-nums; cursor: pointer; }
+.rapido:hover { background: var(--bg-sutil); }
+.rapido.ativo { border-color: var(--acc); background: var(--acc-soft); color: var(--acc-ink); font-weight: 600; }
+.troco { display: block; padding: 10px 12px; border-radius: 8px; background: var(--ok-bg); color: var(--ok); font-size: 16px; }
+.troco b { font-size: 20px; font-variant-numeric: tabular-nums; }
+
+/* Fechar: Voltar à esquerda, confirmar separado à direita */
+.confirmacao { display: grid; gap: 12px; padding: 12px; border: 1px solid var(--linha-forte); border-radius: 10px; background: var(--bg-sutil); }
+.confirmacao p { margin: 0; }
+.confirmacao-botoes { display: flex; gap: 24px; justify-content: space-between; }
+.confirmacao-botoes .btn { width: auto; flex: 1; }
+.confirmacao-botoes .confirmar { flex: 2; }
+a.comprovante { text-decoration: none; }
+
+/* Mais opções (gerente) */
+.mais { border-top: 1px solid var(--linha); padding-top: 10px; }
+.mais summary { cursor: pointer; font-size: 13.5px; color: var(--ink-2); min-height: 44px; display: flex; align-items: center; }
+.mais-bloco { display: grid; gap: 6px; padding: 8px 0; }
+.edicao { display: grid; gap: 8px; padding: 10px; background: var(--bg-sutil); border-radius: 8px; }
+.link { padding: 0; border: 0; background: none; color: var(--ink-2); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; width: fit-content; min-height: 32px; }
+.link.perigo { color: var(--perigo); }
+
+/* O botão Receber fica colado embaixo da janela: não some atrás do teclado nem depois de um pagamento parcial */
+.receber-fixo { position: sticky; bottom: 0; z-index: 1; padding: 10px 0 max(6px, env(safe-area-inset-bottom, 0px)); background: var(--bg); }
+
+@media (max-width: 520px) {
+  .fundo { padding: 0; align-items: flex-end; }
+  .janela { max-height: 100vh; border-radius: 14px 14px 0 0; padding: 16px; }
+  .passos li { font-size: 12px; padding: 6px; }
+  .cartoes { grid-template-columns: 1fr; }
+  .barra-linha { gap: 12px 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}

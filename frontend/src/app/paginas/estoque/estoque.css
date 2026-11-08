@@ -1,0 +1,43 @@
+.barra { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.busca { position: relative; flex: 0 1 280px; min-width: 200px; }
+.busca .i { position: absolute; left: 10px; top: 50%; translate: 0 -50%; color: var(--ink-3); pointer-events: none; }
+.busca .entrada { height: 34px; padding-left: 32px; }
+
+.abas { display: flex; gap: 6px; flex-wrap: wrap; }
+.aba { height: 32px; padding: 0 12px; border: 1px solid var(--linha); border-radius: 99px; background: var(--bg); color: var(--ink-2); font: inherit; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; white-space: nowrap; }
+.aba:hover { background: var(--bg-sutil); }
+.aba.ativa { border-color: var(--ink); color: var(--ink); font-weight: 500; }
+.aba span { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.aba span.alerta-num { color: var(--perigo); font-weight: 600; }
+
+.categoria { display: block; color: var(--ink-3); font-size: 12.5px; }
+
+.saldo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.saldo .rotulo { display: block; color: var(--ink-3); font-size: 12.5px; }
+.saldo strong { font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.saldo strong.baixo { color: var(--perigo); }
+
+.dica { margin: 0 0 10px; color: var(--ink-2); font-size: 13px; }
+.linha-botoes { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.historico { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.historico li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--linha); }
+.historico li:first-child { border-top: 0; }
+.historico b { display: block; font-weight: 500; }
+.historico small { color: var(--ink-3); font-size: 12.5px; }
+.historico .valores { text-align: right; white-space: nowrap; }
+.historico .valores span { display: block; font-weight: 600; font-variant-numeric: tabular-nums; }
+.historico .entra { color: var(--ok); }
+.historico .sai { color: var(--perigo); }
+.historico .vazio { color: var(--ink-3); justify-content: center; }
+
+/* Celular: busca na largura toda, filtros numa linha que rola e a Situação sempre à vista */
+@media (max-width: 600px) {
+  .busca { flex: 1 1 100%; }
+  .busca .entrada { height: 44px; }
+  .abas { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; width: 100%; }
+  .abas::-webkit-scrollbar { display: none; }
+  .abas .aba { flex: none; white-space: nowrap; min-height: 40px; }
+  .tabela th:nth-child(3), .tabela td:nth-child(3) { display: none; }
+  .tabela th, .tabela td { padding-left: 8px; padding-right: 8px; }
+}

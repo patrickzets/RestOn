@@ -1,0 +1,43 @@
+RestON - o que precisa ter instalado e quais bibliotecas o projeto usa.
+As bibliotecas são baixadas sozinhas: o Maven lê o backend/pom.xml e o npm lê o frontend/package.json.
+
+== Programas na máquina ==
+Java (JDK)        21
+Node.js           24 (com npm 11)
+Docker Desktop    para o banco PostgreSQL 17 (docker compose)
+Git
+(Maven não precisa instalar: o projeto traz o mvnw)
+
+== Backend (backend/pom.xml) ==
+Spring Boot 4.1.2
+  spring-boot-starter-webmvc          API REST
+  spring-boot-starter-data-jpa        acesso ao banco (JPA/Hibernate)
+  spring-boot-starter-security        login, sessão e permissões
+  spring-boot-starter-validation      validação dos dados
+  spring-boot-starter-actuator        verificação de saúde da API
+  spring-boot-starter-flyway          criação e versão do banco
+  spring-boot-devtools                recarregar a API durante o desenvolvimento
+flyway-database-postgresql            Flyway para PostgreSQL
+postgresql                            driver do banco
+bcprov-jdk18on (BouncyCastle) 1.86    criptografia
+springdoc-openapi-starter-webmvc-ui 3.2.0   documentação da API (swagger-ui)
+
+Testes do backend
+  spring-boot-starter-*-test, spring-boot-testcontainers
+  testcontainers-junit-jupiter, testcontainers-postgresql    (precisam do Docker ligado)
+
+== Frontend (frontend/package.json) ==
+Angular 21 (common, compiler, core, forms, platform-browser, router)
+rxjs ~7.8
+tslib ^2.3
+@fontsource-variable/geist, @fontsource-variable/geist-mono    fontes
+
+Desenvolvimento e testes do frontend
+  @angular/cli, @angular/build, @angular/compiler-cli ^21.2.29
+  typescript ~5.9
+  vitest ^4 e jsdom ^28        testes unitários
+  @playwright/test ^1.65       testes no navegador
+  prettier ^3.8                formatação
+
+== Banco de dados ==
+PostgreSQL 17 (imagem postgres:17 no docker-compose.yml)

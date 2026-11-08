@@ -1,0 +1,35 @@
+.dias { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+.dias .entrada { width: auto; height: 34px; }
+
+.cliente { display: block; font-weight: 500; line-height: 1.2; }
+.telefone { color: var(--ink-3); font-size: 12.5px; }
+
+.tres { display: grid; grid-template-columns: 1.3fr 1fr 0.8fr; gap: 10px; }
+
+@media (max-width: 600px) {
+  .tres { grid-template-columns: 1fr 1fr; }
+  .tres .campo:nth-child(3) { grid-column: 1 / -1; }
+}
+
+/* No celular, cada linha da tabela vira um cartão */
+@media (max-width: 700px) {
+  .tabela thead { display: none; }
+  .tabela tbody tr { display: grid; grid-template-columns: 1fr auto; grid-template-areas: 'horario situacao' 'cliente cliente' 'mesa pessoas'; gap: 6px 12px; padding: 12px 14px; border-bottom: 1px solid var(--linha); }
+  .tabela tbody tr:last-child { border-bottom: 0; }
+  .tabela td { height: auto; padding: 0; border: 0; white-space: normal; background: transparent; }
+  .c-horario { grid-area: horario; font-weight: 500; }
+  .c-situacao { grid-area: situacao; }
+  .c-cliente { grid-area: cliente; }
+  .c-mesa { grid-area: mesa; color: var(--ink-2); }
+  .c-pessoas { grid-area: pessoas; text-align: right; }
+  .c-pessoas::after { content: ' pessoas'; }
+}
+
+.segmentos { display: inline-flex; border: 1px solid var(--linha); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+.segmento { position: relative; }
+.segmento input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.segmento span { display: block; padding: 8px 18px; font-size: 13.5px; color: var(--ink-2); background: var(--bg); border-right: 1px solid var(--linha); }
+.segmento:last-child span { border-right: 0; }
+.segmento input:checked + span { background: var(--ink); color: var(--bg); }
+.segmento input:focus-visible + span { outline: 2px solid var(--acc); outline-offset: -2px; }
+.selo + .selo { margin-left: 6px; }

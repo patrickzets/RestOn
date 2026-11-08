@@ -1,0 +1,25 @@
+.ferramentas { display: flex; gap: 8px; margin-bottom: 14px; max-width: 560px; }
+.ferramentas .entrada { height: 34px; }
+
+.quadro { overflow-x: auto; }
+.detalhe { max-width: 280px; overflow: hidden; text-overflow: ellipsis; color: var(--ink-2); }
+
+.paginacao { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; color: var(--ink-3); font-size: 13px; flex-wrap: wrap; }
+.botoes { display: flex; gap: 8px; }
+
+/* Celular: cada registro vira um cartão, com a ação em destaque */
+@media (max-width: 700px) {
+  .ferramentas .entrada { height: 44px; }
+  .ferramentas .btn { min-height: 44px; }
+  .tabela thead { display: none; }
+  .tabela tbody tr { display: grid; grid-template-columns: 1fr auto; grid-template-areas: 'acao data' 'quem sobre' 'detalhe detalhe' 'ip ip'; gap: 4px 12px; padding: 12px 14px; border-bottom: 1px solid var(--linha); }
+  .tabela tbody tr:last-child { border-bottom: 0; }
+  .tabela td { height: auto; padding: 0; border: 0; white-space: normal; background: transparent; }
+  .c-acao { grid-area: acao; }
+  .c-data { grid-area: data; text-align: right; font-size: 12.5px; color: var(--ink-3); }
+  .c-quem { grid-area: quem; font-weight: 500; }
+  .c-sobre { grid-area: sobre; text-align: right; font-size: 12.5px; color: var(--ink-3); }
+  .c-detalhe { grid-area: detalhe; max-width: none; overflow: visible; text-overflow: clip; font-size: 13px; }
+  .c-ip { grid-area: ip; font-size: 12px; color: var(--ink-3); }
+  .c-detalhe:empty, .c-ip:empty, .c-sobre:empty { display: none; }
+}

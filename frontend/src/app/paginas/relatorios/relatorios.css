@@ -1,0 +1,45 @@
+:host { display: block; }
+
+.periodo { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; padding: 14px 16px; margin-bottom: 14px; }
+.periodo .campo { margin-bottom: 0; }
+.periodo .btn, .periodo .entrada { height: 40px; min-height: 40px; }
+.atalhos { display: flex; gap: 6px; flex-wrap: wrap; }
+.periodo-texto { color: var(--ink-3); font-size: 13px; margin: 14px 0 10px; }
+
+.abas { display: flex; flex-wrap: wrap; margin-bottom: 14px; border-bottom: 1px solid var(--linha); }
+.aba { min-height: 40px; padding: 0 4px; margin-right: 14px; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; border-radius: 0; background: transparent; color: var(--ink-3); font: inherit; font-size: 14px; cursor: pointer; }
+.aba:hover { color: var(--ink); background: transparent; }
+.aba.ativa { border-bottom-color: var(--acc); color: var(--ink); font-weight: 600; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px 0; margin-bottom: 18px; padding: 14px 0; border-top: 1px solid var(--linha); border-bottom: 1px solid var(--linha); }
+.tile { padding: 2px 18px; border-left: 1px solid var(--linha); }
+.tile:first-child { padding-left: 0; border-left: 0; }
+.tile .rotulo { display: block; color: var(--ink-3); font-size: 12.5px; }
+.tile strong { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.secao { margin-bottom: 14px; padding-bottom: 4px; }
+.secao h2 { font-size: 14px; font-weight: 600; padding: 14px 16px 8px; }
+.secao h2 small { color: var(--ink-3); font-weight: 400; }
+
+.grafico { display: flex; align-items: flex-end; gap: 10px; height: 210px; padding: 8px 16px 12px; }
+.coluna { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; }
+.barra-area { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; }
+.barra-valor { width: 100%; max-width: 72px; background: var(--acc); opacity: 0.4; border-radius: 3px 3px 0 0; }
+.barra-valor.pico { opacity: 1; }
+.pico-valor { align-self: flex-start; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dia { height: 16px; font-size: 10.5px; color: var(--ink-3); text-align: center; white-space: nowrap; }
+
+@media (max-width: 600px) {
+  .periodo { align-items: stretch; }
+  .periodo .campo { flex: 1 1 100%; }
+  .periodo > .btn.pri { flex: 1 1 100%; }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tile, .tile:first-child { padding: 2px 0 2px 16px; border-left: 1px solid var(--linha); }
+  .tile:nth-child(odd) { padding-left: 0; border-left: 0; }
+  .dia { font-size: 9.5px; }
+}
+
+@media print {
+  .sem-impressao { display: none !important; }
+  .painel { box-shadow: none; }
+}

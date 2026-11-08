@@ -1,0 +1,171 @@
+<div class="titulo">
+  <div>
+    <h1>Equipe</h1>
+  </div>
+  <button class="btn pri" type="button" (click)="novo()">
+    <svg class="i"><use href="icones.svg#i-mais" /></svg>
+    Novo funcionário
+  </button>
+</div>
+
+@if (avisoDeSenha(); as aviso) {
+  <div class="alerta aviso senha-aviso" role="status">
+    <div>
+      <strong>{{ aviso.titulo }}.</strong> Anote e entregue esta senha provisória: ela aparece só agora e a pessoa vai precisar trocá-la no primeiro acesso.
+      <code>{{ aviso.senha }}</code>
+    </div>
+    <div class="acoes-aviso">
+      <button class="btn sm" type="button" (click)="copiarSenha()">{{ copiado() ? 'Copiada' : 'Copiar' }}</button>
+      <button class="btn sm" type="button" (click)="fecharAviso()">Já anotei</button>
+    </div>
+  </div>
+}
+
+@if (erroDaLista()) {
+  <div class="alerta perigo" role="alert">{{ erroDaLista() }}</div>
+}
+
+<div class="lista-gaveta" [class.com-gaveta]="painel() !== 'fechado'">
+  <div class="tab">
+    <table class="tabela">
+      <thead>
+        <tr>
+          <th>Funcionário</th>
+          <th>Perfil</th>
+          <th>Situação</th>
+          <th>Último acesso</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (f of funcionarios(); track f.id) {
+          <tr class="clicavel" [class.escolhida]="selecionado()?.id === f.id" (click)="editar(f)">
+            <td>
+              <span class="pessoa">
+                <span>
+                  <b>{{ f.nome }}</b>
+                  <small>{{ f.login }}</small>
+                </span>
+              </span>
+            </td>
+            <td>{{ nomesDosPerfis[f.perfil] }}</td>
+            <td>
+              @if (!f.ativo) {
+                <span class="selo">Desativado</span>
+              } @else if (f.bloqueado) {
+                <span class="selo perigo">Bloqueado</span>
+              } @else if (f.senhaProvisoria) {
+                <span class="selo aviso">Senha provisória</span>
+              } @else {
+                <span class="selo ok">Ativo</span>
+              }
+            </td>
+            <td class="num">{{ f.ultimoAcessoEm ? (f.ultimoAcessoEm | date: 'dd/MM/yyyy HH:mm') : 'Nunca entrou' }}</td>
+          </tr>
+        } @empty {
+          @if (!carregando()) {
+            <tr><td colspan="4" class="aviso-vazio">Nenhum funcionário cadastrado.</td></tr>
+          }
+        }
+      </tbody>
+    </table>
+    @if (carregando()) {
+      <p class="aviso-vazio">Carregando...</p>
+    }
+  </div>
+
+  @if (painel() !== 'fechado') {
+    <aside class="gaveta" appGaveta (fechar)="fechar()" aria-label="Dados do funcionário">
+      <div class="cab">
+        <div>
+          <h2>{{ painel() === 'novo' ? 'Novo funcionário' : selecionado()?.nome }}</h2>
+          <p>{{ painel() === 'novo' ? 'A senha provisória é gerada ao salvar.' : 'Alterar dados e situação da conta' }}</p>
+        </div>
+        <button class="fechar" type="button" aria-label="Fechar" (click)="fechar()">
+          <svg class="i"><use href="icones.svg#i-x" /></svg>
+        </button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="salvar()" class="bloco" novalidate>
+        <div class="campo">
+          <label for="nome">Nome</label>
+          <input id="nome" class="entrada" type="text" formControlName="nome" [class.invalida]="invalido('nome')" />
+          @if (invalido('nome')) {
+            <span class="msg-erro">Informe o nome (de 2 a 120 letras).</span>
+          }
+        </div>
+
+        <div class="campo">
+          <label for="login">Login</label>
+          <input id="login" class="entrada" type="text" formControlName="login" autocapitalize="none" spellcheck="false" [class.invalida]="invalido('login')" />
+          @if (painel() === 'novo') {
+            <span class="dica-campo">Use letras, números, ponto, hífen ou sublinhado. Não dá para mudar depois.</span>
+          }
+          @if (invalido('login')) {
+            <span class="msg-erro">Login de 3 a 40 caracteres, sem espaços.</span>
+          }
+        </div>
+
+        <div class="campo">
+          <label for="perfil">Perfil</label>
+          <select id="perfil" class="entrada" formControlName="perfil" [attr.disabled]="selecionado() && (ehEu(selecionado()!) || !podeGerenciar(selecionado()!)) ? true : null">
+            @for (p of perfisDisponiveis(); track p) {
+              <option [value]="p">{{ nomesDosPerfis[p] }}</option>
+            }
+          </select>
+        </div>
+
+        @if (erroDoPainel()) {
+          <div class="alerta perigo" role="alert">{{ erroDoPainel() }}</div>
+        }
+
+        @if (painel() === 'novo' || (selecionado() && podeGerenciar(selecionado()!))) {
+          <button class="btn pri grande" type="submit" [disabled]="salvando()">
+            {{ painel() === 'novo' ? 'Criar funcionário' : 'Salvar alterações' }}
+          </button>
+        }
+      </form>
+
+      @if (painel() === 'editar' && selecionado(); as f) {
+        <div class="bloco conta">
+          <h3>Conta</h3>
+
+          @if (ehEu(f)) {
+            <p class="aviso-conta">Esta é a sua conta. Para trocar a sua senha, use "Alterar senha" no menu.</p>
+          } @else if (!podeGerenciar(f)) {
+            <p class="aviso-conta">Só um Administrador pode alterar a conta de outro Administrador.</p>
+          } @else if (confirmando(); as acao) {
+            <div class="confirmacao" role="alertdialog" aria-live="polite">
+              <p>
+                @switch (acao) {
+                  @case ('bloquear') { Bloquear {{ f.nome }}? A pessoa perde o acesso agora mesmo. }
+                  @case ('desbloquear') { Liberar o acesso de {{ f.nome }} de novo? }
+                  @case ('desativar') { Desativar {{ f.nome }}? Use quando a pessoa sai da empresa. O cadastro fica guardado. }
+                  @case ('ativar') { Reativar {{ f.nome }}? }
+                  @case ('redefinir') { Gerar uma nova senha provisória para {{ f.nome }}? A senha atual deixa de valer. }
+                }
+              </p>
+              <div class="linha-botoes">
+                <button class="btn pri" type="button" [disabled]="salvando()" (click)="confirmar()">Confirmar</button>
+                <button class="btn" type="button" (click)="cancelarConfirmacao()">Cancelar</button>
+              </div>
+            </div>
+          } @else {
+            <div class="linha-botoes">
+              @if (f.bloqueado) {
+                <button class="btn" type="button" (click)="pedirConfirmacao('desbloquear')">Desbloquear</button>
+              } @else {
+                <button class="btn perigo" type="button" [disabled]="!f.ativo" (click)="pedirConfirmacao('bloquear')">Bloquear</button>
+              }
+              @if (f.ativo) {
+                <button class="btn perigo" type="button" (click)="pedirConfirmacao('desativar')">Desativar</button>
+              } @else {
+                <button class="btn" type="button" (click)="pedirConfirmacao('ativar')">Reativar</button>
+              }
+              <button class="btn" type="button" [disabled]="!f.ativo" (click)="pedirConfirmacao('redefinir')">Redefinir senha</button>
+            </div>
+          }
+        </div>
+      }
+    </aside>
+  }
+</div>

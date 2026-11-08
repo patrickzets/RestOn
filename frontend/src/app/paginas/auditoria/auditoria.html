@@ -1,0 +1,65 @@
+<div class="titulo">
+  <div>
+    <h1>Auditoria</h1>
+  </div>
+</div>
+
+<div class="ferramentas">
+  <input
+    #busca
+    class="entrada"
+    type="search"
+    placeholder="Filtrar por ação, ex.: LOGIN_FALHA"
+    aria-label="Filtrar pelo código da ação"
+    (keyup.enter)="filtrar(busca.value)"
+  />
+  <button class="btn" type="button" (click)="filtrar(busca.value)">Filtrar</button>
+</div>
+
+@if (erro()) {
+  <div class="alerta perigo" role="alert">{{ erro() }}</div>
+}
+
+<div class="painel quadro">
+  <table class="tabela">
+    <thead>
+      <tr>
+        <th>Data e hora</th>
+        <th>Quem</th>
+        <th>Ação</th>
+        <th>Sobre</th>
+        <th>Detalhes</th>
+        <th>IP</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (r of registros(); track r.id) {
+        <tr>
+          <td class="num c-data">{{ r.em | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
+          <td class="c-quem">{{ r.login ?? 'Sistema' }}</td>
+          <td class="c-acao">
+            <span class="selo" [class.perigo]="gravidade(r.acao) === 'perigo'" [class.aviso]="gravidade(r.acao) === 'aviso'">{{ nomeDaAcao(r.acao) }}</span>
+          </td>
+          <td class="c-sobre">{{ r.entidade ? r.entidade + (r.entidadeId ? ' #' + r.entidadeId : '') : '' }}</td>
+          <td class="detalhe c-detalhe">{{ r.detalhes ?? '' }}</td>
+          <td class="num c-ip">{{ r.ip ?? '' }}</td>
+        </tr>
+      } @empty {
+        @if (!carregando()) {
+          <tr><td colspan="6" class="aviso-vazio">Nenhum registro encontrado.</td></tr>
+        }
+      }
+    </tbody>
+  </table>
+  @if (carregando()) {
+    <p class="aviso-vazio">Carregando...</p>
+  }
+</div>
+
+<div class="paginacao">
+  <span>{{ total() }} registros, página {{ pagina() + 1 }} de {{ totalDePaginas() }}</span>
+  <span class="botoes">
+    <button class="btn sm" type="button" [disabled]="pagina() === 0" (click)="irPara(pagina() - 1)">Anterior</button>
+    <button class="btn sm" type="button" [disabled]="pagina() + 1 >= totalDePaginas()" (click)="irPara(pagina() + 1)">Próxima</button>
+  </span>
+</div>

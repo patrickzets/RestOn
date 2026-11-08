@@ -1,0 +1,75 @@
+<main class="tela">
+  <app-fundo-de-icones />
+
+  <section class="laranja">
+    <div class="marca-grande">
+      <span class="marca"><b></b></span>
+      <span class="nome">RestON</span>
+    </div>
+
+    <div class="miolo">
+      <h1>Entrar</h1>
+      <p class="sub">Use o login e a senha que o gerente passou para você.</p>
+
+      <form [formGroup]="form" (ngSubmit)="entrar()" novalidate>
+        <div class="campo">
+          <label for="login">Login</label>
+          <input
+            id="login"
+            class="entrada"
+            type="text"
+            formControlName="login"
+            autocomplete="username"
+            autocapitalize="none"
+            spellcheck="false"
+            [class.invalida]="invalido('login')"
+          />
+          @if (invalido('login')) {
+            <span class="msg-erro">Informe o seu login.</span>
+          }
+        </div>
+
+        <div class="campo">
+          <label for="senha">Senha</label>
+          <div class="com-botao">
+            <input
+              id="senha"
+              class="entrada"
+              [type]="mostrarSenha() ? 'text' : 'password'"
+              formControlName="senha"
+              autocomplete="current-password"
+              [class.invalida]="invalido('senha')"
+              (keydown)="verCapsLock($event)"
+              (keyup)="verCapsLock($event)"
+              (blur)="capsLigado.set(false)"
+            />
+            <button type="button" class="mostrar" (click)="mostrarSenha.set(!mostrarSenha())" [attr.aria-pressed]="mostrarSenha()">
+              {{ mostrarSenha() ? 'Ocultar' : 'Mostrar' }}
+            </button>
+          </div>
+          @if (capsLigado()) {
+            <span class="aviso-caps" role="status">Caps Lock ligado: as letras saem em maiúsculas.</span>
+          }
+          @if (invalido('senha')) {
+            <span class="msg-erro">Informe a sua senha.</span>
+          }
+        </div>
+
+        <label class="lembrar">
+          <input type="checkbox" formControlName="lembrar" />
+          Lembrar meu login neste aparelho
+        </label>
+
+        @if (erro()) {
+          <div class="alerta perigo" role="alert">{{ erro() }}</div>
+        }
+
+        <button class="entrar" type="submit" [disabled]="enviando()">
+          {{ enviando() ? 'Entrando...' : 'Entrar' }}
+        </button>
+      </form>
+
+      <p class="ajuda">Esqueceu a senha? Peça ao gerente para gerar uma nova.</p>
+    </div>
+  </section>
+</main>

@@ -1,0 +1,3 @@
+:host { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; display: block; }
+.ico { position: absolute; color: var(--acc); opacity: 0.2; transform: translate(-50%, -50%) rotate(var(--giro, 0deg)); }
+.ico svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }

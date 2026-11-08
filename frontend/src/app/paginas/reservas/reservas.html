@@ -1,0 +1,212 @@
+<div class="titulo">
+  <div>
+    <h1>Reservas</h1>
+  </div>
+  <button class="btn pri" type="button" (click)="nova()">
+    <svg class="i"><use href="icones.svg#i-mais" /></svg>
+    Nova reserva
+  </button>
+</div>
+
+<div class="dias" role="group" aria-label="Escolher o dia">
+  <button class="btn" type="button" aria-label="Dia anterior" (click)="mudarDia(-1)">‹</button>
+  <input class="entrada" type="date" aria-label="Dia" [value]="dia()" (change)="escolherDia($any($event.target).value)" />
+  <button class="btn" type="button" aria-label="Próximo dia" (click)="mudarDia(1)">›</button>
+  <button class="btn" type="button" (click)="hoje()">Hoje</button>
+</div>
+
+@if (erroDaLista()) {
+  <div class="alerta perigo" role="alert">{{ erroDaLista() }}</div>
+}
+
+<div class="lista-gaveta" [class.com-gaveta]="painel() !== 'fechado'">
+  <div class="tab">
+    <table class="tabela">
+      <thead>
+        <tr>
+          <th>Horário</th>
+          <th>Cliente</th>
+          <th>Mesa</th>
+          <th>Pessoas</th>
+          <th>Situação</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of reservas(); track r.id) {
+          <tr class="clicavel" [class.escolhida]="selecionada()?.id === r.id" (click)="editar(r)">
+            <td class="num c-horario">{{ r.inicio | date: 'HH:mm' }} – {{ r.fim | date: 'HH:mm' }}</td>
+            <td class="c-cliente">
+              <b class="cliente">{{ r.nomeCliente }}</b>
+              @if (r.telefone) {
+                <small class="telefone">{{ formatarTelefone(r.telefone) }}</small>
+              } @else if (telefoneRemovido(r)) {
+                <small class="telefone">Telefone removido (LGPD)</small>
+              }
+            </td>
+            <td class="c-mesa">Mesa {{ r.mesaNumero }}</td>
+            <td class="num c-pessoas">{{ r.qtdPessoas }}</td>
+            <td class="c-situacao">
+              @switch (r.status) {
+                @case ('ATIVA') {
+                  @if (r.atrasada) {
+                    <span class="selo perigo">Atrasada</span>
+                  } @else {
+                    <span class="selo ok">Confirmada</span>
+                  }
+                  @if (r.valorAntecipado > 0) {
+                    <span class="selo info">Pago {{ reais(r.valorAntecipado) }}</span>
+                  }
+                }
+                @case ('CHEGOU') { <span class="selo info">Chegou</span> }
+                @case ('CONCLUIDA') { <span class="selo">Concluída</span> }
+                @case ('CANCELADA') { <span class="selo">Cancelada</span> }
+                @case ('NAO_COMPARECEU') { <span class="selo aviso">Não compareceu</span> }
+              }
+            </td>
+          </tr>
+        } @empty {
+          @if (!carregando()) {
+            <tr><td colspan="5" class="aviso-vazio">Nenhuma reserva neste dia.</td></tr>
+          }
+        }
+      </tbody>
+    </table>
+    @if (carregando()) {
+      <p class="aviso-vazio">Carregando...</p>
+    }
+  </div>
+
+  @if (painel() !== 'fechado') {
+    <aside class="gaveta" appGaveta (fechar)="fechar()" aria-label="Dados da reserva">
+      <div class="cab">
+        <div>
+          <h2>{{ painel() === 'nova' ? 'Nova reserva' : selecionada()?.nomeCliente }}</h2>
+          <p>
+            @if (painel() === 'nova') {
+              A duração padrão é de 2 horas.
+            } @else if (selecionada(); as r) {
+              Mesa {{ r.mesaNumero }} · {{ r.inicio | date: 'dd/MM HH:mm' }}
+            }
+          </p>
+        </div>
+        <button class="fechar" type="button" aria-label="Fechar" (click)="fechar()">
+          <svg class="i"><use href="icones.svg#i-x" /></svg>
+        </button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="salvar()" class="bloco" novalidate>
+        <div class="campo">
+          <label for="nomeCliente">Nome do cliente</label>
+          <input id="nomeCliente" class="entrada" type="text" formControlName="nomeCliente" [class.invalida]="invalido('nomeCliente')" />
+          @if (invalido('nomeCliente')) {
+            <span class="msg-erro">Informe o nome (de 2 a 120 letras).</span>
+          }
+        </div>
+
+        @if (ehGestor() || painel() === 'nova') {
+          <div class="campo">
+            <label for="telefone">Telefone</label>
+            <input id="telefone" class="entrada" type="tel" inputmode="tel" placeholder="(11) 91234-5678" formControlName="telefone" [class.invalida]="invalido('telefone')" />
+            @if (invalido('telefone')) {
+              <span class="msg-erro">Use o DDD e o número, como (11) 91234-5678.</span>
+            }
+          </div>
+        }
+
+        <div class="tres">
+          <div class="campo">
+            <label for="data">Data</label>
+            <input id="data" class="entrada" type="date" formControlName="data" [class.invalida]="invalido('data')" />
+          </div>
+          <div class="campo">
+            <label for="hora">Hora</label>
+            <input id="hora" class="entrada" type="time" formControlName="hora" [class.invalida]="invalido('hora')" />
+          </div>
+          <div class="campo">
+            <label for="qtdPessoas">Pessoas</label>
+            <input id="qtdPessoas" class="entrada" type="number" min="1" max="30" formControlName="qtdPessoas" [class.invalida]="invalido('qtdPessoas')" />
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="mesaId">Mesa</label>
+          <select id="mesaId" class="entrada" formControlName="mesaId" [class.invalida]="invalido('mesaId')">
+            @if (!editavel() && selecionada(); as atual) {
+              <option [ngValue]="atual.mesaId">Mesa {{ atual.mesaNumero }}</option>
+            } @else {
+              <option [ngValue]="0">{{ buscandoMesas() ? 'Procurando mesas...' : 'Escolha a mesa' }}</option>
+            }
+            @for (m of mesasLivres(); track m.id) {
+              <option [ngValue]="m.id">Mesa {{ m.numero }} ({{ m.capacidade }} lugares)</option>
+            }
+          </select>
+          @if (editavel() && !buscandoMesas() && mesasLivres().length === 0 && form.controls.data.value && form.controls.hora.value) {
+            <span class="msg-erro">Nenhuma mesa livre neste horário para esse número de pessoas.</span>
+          } @else if (editavel() && !form.controls.hora.value) {
+            <span class="dica-campo">Informe data, hora e pessoas para ver as mesas livres.</span>
+          }
+        </div>
+
+        @if (erroDoPainel()) {
+          <div class="alerta perigo" role="alert">{{ erroDoPainel() }}</div>
+        }
+
+        @if (editavel()) {
+          <button class="btn pri grande" type="submit" [disabled]="salvando()">
+            {{ painel() === 'nova' ? 'Criar reserva' : 'Salvar alterações' }}
+          </button>
+        }
+      </form>
+
+      @if (painel() === 'editar' && selecionada(); as r) {
+        @if (r.status === 'ATIVA' && ehGestor()) {
+          <div class="bloco">
+            <h3>Pagamento antecipado</h3>
+            @if (r.valorAntecipado > 0) {
+              <p class="texto">Já foi pago {{ reais(r.valorAntecipado) }}. Esse valor entra como crédito na comanda quando o cliente chegar.</p>
+            } @else {
+              <div class="segmentos" role="radiogroup" aria-label="Forma de pagamento antecipado">
+                @for (m of metodosAntecipados; track m) {
+                  <label class="segmento">
+                    <input type="radio" name="metodoAntecipado" [checked]="metodoAntecipado() === m" (change)="metodoAntecipado.set(m)" />
+                    <span>{{ nomesDosMetodos[m] }}</span>
+                  </label>
+                }
+              </div>
+              <div class="campo">
+                <label for="antecipado">Valor pago (R$)</label>
+                <input id="antecipado" class="entrada" type="number" step="0.01" min="0.01" [value]="valorAntecipado() ?? ''" (input)="valorAntecipado.set(numero($event))" />
+                <span class="dica-campo">Vira crédito na primeira comanda. Se a reserva for cancelada, o valor é estornado.</span>
+              </div>
+              <button type="button" class="btn" [disabled]="salvando()" (click)="anteciparPagamento()">Registrar pagamento</button>
+            }
+          </div>
+        }
+        @if (r.status === 'ATIVA') {
+          <div class="bloco">
+            <h3>Situação</h3>
+            @if (confirmandoCancelar()) {
+              <div class="confirmacao" role="alertdialog">
+                <p>
+                  Cancelar a reserva de {{ r.nomeCliente }}? O horário fica livre para outra reserva.
+                  @if (r.valorAntecipado > 0) {
+                    O valor pago antecipado ({{ reais(r.valorAntecipado) }}) será estornado.
+                  }
+                </p>
+                <div class="linha-botoes">
+                  <button class="btn pri" type="button" [disabled]="salvando()" (click)="cancelarReserva()">Cancelar reserva</button>
+                  <button class="btn" type="button" (click)="confirmandoCancelar.set(false)">Voltar</button>
+                </div>
+              </div>
+            } @else {
+              <div class="linha-botoes">
+                <button class="btn" type="button" [disabled]="salvando()" (click)="registrarChegada()">O cliente chegou</button>
+                <button class="btn perigo" type="button" (click)="confirmandoCancelar.set(true)">Cancelar reserva</button>
+              </div>
+            }
+          </div>
+        }
+      }
+    </aside>
+  }
+</div>

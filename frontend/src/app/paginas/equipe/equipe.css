@@ -1,0 +1,16 @@
+.senha-aviso { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.senha-aviso code { display: block; margin-top: 8px; font-family: var(--mono); font-size: 18px; letter-spacing: 0.04em; color: var(--ink); background: var(--bg); padding: 6px 10px; border-radius: 6px; width: fit-content; }
+.acoes-aviso { display: flex; gap: 8px; }
+
+.pessoa { display: inline-flex; align-items: center; gap: 10px; }
+.pessoa b { display: block; font-weight: 500; line-height: 1.2; }
+.pessoa small { color: var(--ink-3); font-size: 12.5px; }
+
+.aviso-conta { margin: 0; color: var(--ink-2); font-size: 13.5px; }
+
+/* Celular: o último acesso sai da tabela para Perfil e Situação caberem sem rolar */
+@media (max-width: 600px) {
+  .tabela th:nth-child(4), .tabela td:nth-child(4) { display: none; }
+  .tabela th, .tabela td { padding-left: 8px; padding-right: 8px; }
+  .tabela td:nth-child(3) .selo { white-space: normal; }
+}

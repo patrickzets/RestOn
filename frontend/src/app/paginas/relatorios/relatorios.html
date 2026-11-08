@@ -1,0 +1,170 @@
+<div class="titulo">
+  <div>
+    <h1>Relatórios</h1>
+  </div>
+  <button type="button" class="btn sem-impressao" (click)="imprimir()">Imprimir</button>
+</div>
+
+<div class="painel periodo sem-impressao">
+  <div class="atalhos" role="group" aria-label="Atalhos de período">
+    <button type="button" class="btn" (click)="atalho(1)">Hoje</button>
+    <button type="button" class="btn" (click)="atalho(7)">7 dias</button>
+    <button type="button" class="btn" (click)="atalho(30)">30 dias</button>
+  </div>
+  <div class="campo">
+    <label for="de">De</label>
+    <input id="de" class="entrada" type="date" [value]="de()" (input)="de.set($any($event.target).value)" />
+  </div>
+  <div class="campo">
+    <label for="ate">Até</label>
+    <input id="ate" class="entrada" type="date" [value]="ate()" (input)="ate.set($any($event.target).value)" />
+  </div>
+  <button type="button" class="btn pri" (click)="aplicar()">Aplicar</button>
+</div>
+
+@if (erro()) {
+  <div class="alerta perigo" role="alert">{{ erro() }}</div>
+}
+
+<div class="abas sem-impressao" role="group" aria-label="Tipo de relatório">
+  <button type="button" class="aba" [class.ativa]="aba() === 'vendas'" (click)="aba.set('vendas')">Vendas</button>
+  <button type="button" class="aba" [class.ativa]="aba() === 'turnos'" (click)="aba.set('turnos')">Turnos do caixa</button>
+</div>
+
+@if (aba() === 'vendas') {
+  @if (carregando() && !vendas()) {
+    <p class="aviso-vazio">Carregando...</p>
+  } @else if (vendas(); as v) {
+    <p class="periodo-texto">Período: {{ diaMes(v.de) }} a {{ diaMes(v.ate) }}</p>
+
+    <div class="tiles">
+      <div class="tile"><span class="rotulo">Faturamento</span><strong>{{ moeda(v.resumo.faturamento) }}</strong></div>
+      <div class="tile"><span class="rotulo">Comandas fechadas</span><strong>{{ v.resumo.comandas }}</strong></div>
+      <div class="tile"><span class="rotulo">Ticket médio</span><strong>{{ moeda(v.resumo.ticketMedio) }}</strong></div>
+      <div class="tile"><span class="rotulo">Taxa de serviço</span><strong>{{ moeda(v.resumo.taxaDeServico) }}</strong></div>
+      <div class="tile"><span class="rotulo">Estornado</span><strong>{{ moeda(v.resumo.estornado) }}</strong></div>
+      <div class="tile"><span class="rotulo">Itens cancelados</span><strong>{{ v.resumo.itensCancelados }}</strong></div>
+    </div>
+
+    <section class="painel secao">
+      <h2>Faturamento por dia</h2>
+      @if (maiorDia() === 0) {
+        <p class="aviso-vazio">Nenhuma venda neste período.</p>
+      } @else {
+        <div class="grafico" role="img" aria-label="Faturamento por dia">
+          @for (dia of v.porDia; track dia.data; let i = $index) {
+            <div class="coluna" [title]="diaMes(dia.data) + ': ' + moeda(dia.total)">
+              <div class="barra-area">
+                @if (dia.total === maiorDia()) { <span class="pico-valor">{{ moeda(dia.total) }}</span> }
+                <div class="barra-valor" [class.pico]="dia.total === maiorDia()" [style.height.%]="altura(dia.total)"></div>
+              </div>
+              <span class="dia">{{ mostrarRotulo(i) ? diaMes(dia.data) : '' }}</span>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="painel secao">
+      <h2>Recebido por forma de pagamento</h2>
+      @if (v.porMetodo.length === 0) {
+        <p class="aviso-vazio">Nenhuma venda neste período.</p>
+      } @else {
+        <div class="tab">
+          <table class="tabela">
+            <thead><tr><th>Forma</th><th class="num">Pagamentos</th><th class="num">Total</th></tr></thead>
+            <tbody>
+              @for (m of v.porMetodo; track m.metodo) {
+                <tr><td>{{ nomesDosMetodos[m.metodo] }}</td><td class="num">{{ m.pagamentos }}</td><td class="num">{{ moeda(m.total) }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <section class="painel secao">
+      <h2>Produtos mais vendidos</h2>
+      @if (v.maisVendidos.length === 0) {
+        <p class="aviso-vazio">Nenhuma venda neste período.</p>
+      } @else {
+        <div class="tab">
+          <table class="tabela">
+            <thead><tr><th>Produto</th><th>Categoria</th><th class="num">Qtd</th><th class="num">Receita</th></tr></thead>
+            <tbody>
+              @for (p of v.maisVendidos; track p.produto) {
+                <tr><td><b>{{ p.produto }}</b></td><td>{{ p.categoria }}</td><td class="num">{{ p.quantidade }}</td><td class="num">{{ moeda(p.receita) }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <section class="painel secao">
+      <h2>Por garçom</h2>
+      @if (v.porGarcom.length === 0) {
+        <p class="aviso-vazio">Nenhuma venda neste período.</p>
+      } @else {
+        <div class="tab">
+          <table class="tabela">
+            <thead><tr><th>Garçom</th><th class="num">Comandas</th><th class="num">Total</th></tr></thead>
+            <tbody>
+              @for (g of v.porGarcom; track g.garcom) {
+                <tr><td>{{ g.garcom }}</td><td class="num">{{ g.comandas }}</td><td class="num">{{ moeda(g.total) }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+} @else {
+  @if (erroDosTurnos()) {
+    <div class="alerta perigo" role="alert">{{ erroDosTurnos() }}</div>
+  }
+  <section class="painel secao">
+    <h2>Turnos do caixa <small>(últimos 30)</small></h2>
+    @if (carregandoTurnos()) {
+      <p class="aviso-vazio">Carregando...</p>
+    } @else if (turnos().length === 0) {
+      <p class="aviso-vazio">Nenhum turno registrado.</p>
+    } @else {
+      <div class="tab">
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th>Operador</th><th>Abertura</th><th>Fechamento</th>
+              <th class="num">Valor inicial</th><th class="num">Total recebido</th>
+              <th class="num">Dinheiro esperado</th><th class="num">Dinheiro contado</th><th>Diferença</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (t of turnos(); track t.id) {
+              <tr>
+                <td><b>{{ t.operadorNome }}</b></td>
+                <td>{{ t.abertoEm | date: 'dd/MM HH:mm' }}</td>
+                <td>{{ t.fechadoEm ? (t.fechadoEm | date: 'dd/MM HH:mm') : 'Em aberto' }}</td>
+                <td class="num">{{ moeda(t.valorInicial) }}</td>
+                <td class="num">{{ moeda(t.totalRecebido) }}</td>
+                <td class="num">{{ moeda(t.dinheiroEsperado) }}</td>
+                <td class="num">{{ t.valorContado === null ? '—' : moeda(t.valorContado) }}</td>
+                <td>
+                  @if (t.diferenca === null) {
+                    —
+                  } @else if (t.diferenca === 0) {
+                    <span class="selo ok">Confere</span>
+                  } @else if (t.diferenca < 0) {
+                    <span class="selo perigo">Faltou {{ moeda(-t.diferenca) }}</span>
+                  } @else {
+                    <span class="selo aviso">Sobrou {{ moeda(t.diferenca) }}</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+}

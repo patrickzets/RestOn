@@ -1,0 +1,81 @@
+:host { display: block; }
+
+/* O formulário fica dentro da zona laranja; o fundo branco leva os ícones e escurece para rosado perto da curva */
+.tela {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 100vh;
+  background: #fff;
+}
+
+.laranja {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 30px 40px 36px;
+  color: #fff;
+  min-height: 100vh;
+  /* Círculo laranja do lado esquerdo (a ponta é um semicírculo da altura da tela) e uma luz rosada na borda */
+  width: max(54vw, 640px);
+  border-radius: 0 50vh 50vh 0;
+  box-shadow: 0 0 90px 26px rgba(216, 74, 31, 0.28);
+  background:
+    radial-gradient(80% 60% at 12% 6%, rgba(255, 150, 90, 0.5) 0%, rgba(255, 150, 90, 0) 60%),
+    linear-gradient(195deg, #D84A1F 0%, var(--acc) 45%, var(--acc-ink) 100%);
+}
+
+.marca-grande { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
+.marca { width: 30px; height: 30px; border-radius: 9px; background: #fff; display: grid; place-items: center; }
+.marca b { display: block; width: 17px; height: 10px; border-radius: 99px; background: var(--acc); position: relative; }
+.marca b::after { content: ''; position: absolute; right: 1px; top: 1px; width: 8px; height: 8px; border-radius: 50%; background: #fff; }
+
+.miolo { margin: auto; width: 100%; max-width: 380px; padding: 24px 0; }
+h1 { font-size: 32px; font-weight: 600; letter-spacing: -0.035em; line-height: 1.15; }
+.sub { margin: 6px 0 26px; color: #fff; font-size: 15px; }
+
+.campo label { color: rgba(255, 255, 255, 0.92); }
+.entrada { height: 44px; border: 0; border-radius: 10px; background: #fff; color: var(--ink); }
+.entrada:focus { box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.35); }
+.entrada.invalida { box-shadow: 0 0 0 3px rgba(23, 21, 18, 0.5); }
+.msg-erro { color: #fff; font-weight: 600; }
+
+.com-botao { position: relative; }
+.com-botao .entrada { padding-right: 84px; }
+.mostrar {
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink-2);
+  font: 500 13px var(--fonte);
+  cursor: pointer;
+}
+.mostrar:hover { background: var(--neutro-bg); }
+
+.aviso-caps { display: block; margin-top: 6px; color: #fff; font-size: 12.5px; font-weight: 600; }
+
+.lembrar { display: flex; align-items: center; gap: 10px; margin: 6px 0 20px; min-height: 28px; font-size: 14px; color: #fff; cursor: pointer; }
+.lembrar input { width: 20px; height: 20px; margin: 0; flex: none; accent-color: var(--ink); }
+
+.entrar { width: 100%; height: 48px; border: 0; border-radius: 10px; background: var(--ink); color: #fff; font: 600 15px var(--fonte); cursor: pointer; transition: background 0.15s; }
+.entrar:hover:not(:disabled) { background: #2B2824; }
+.entrar:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.entrar:disabled { opacity: 0.7; cursor: default; }
+
+.ajuda { margin: 18px 0 0; text-align: center; font-size: 14px; color: #fff; }
+
+@media (max-width: 600px) {
+  .laranja { padding: 24px 22px 36px; }
+}
+
+/* Celular: o laranja fica em cima, com a borda de baixo arredondada, e os ícones aparecem embaixo */
+@media (max-width: 900px) {
+  .laranja { align-self: start; width: 100%; min-height: 0; border-radius: 0 0 56px 56px; box-shadow: 0 18px 50px 6px rgba(216, 74, 31, 0.22); padding-bottom: 44px; }
+}
